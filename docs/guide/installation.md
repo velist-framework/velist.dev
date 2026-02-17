@@ -82,7 +82,7 @@ my-app/
    bun run dev
    ```
 
-2. Open http://localhost:3000
+2. Open `http://localhost:3000`
 
 3. Login with default credentials:
    - Email: `admin@example.com`
@@ -92,5 +92,5 @@ You should see the dashboard.
 
 ## Next Steps
 
-- [Quick Start](/guide/quick-start) — Build your first feature
-- [Project Structure](/guide/structure) — Understand the architecture
+- [Quick Start](./quick-start) — Build your first feature
+- [Project Structure](./structure) — Understand the architecture

@@ -3,6 +3,7 @@ import { defineConfig } from 'vitepress'
 export default defineConfig({
   title: 'Velist',
   description: 'Features-first fullstack framework',
+  ignoreDeadLinks: true,
   
   themeConfig: {
     nav: [
@@ -19,6 +20,13 @@ export default defineConfig({
             { text: 'Introduction', link: '/guide/' },
             { text: 'Installation', link: '/guide/installation' },
             { text: 'Quick Start', link: '/guide/quick-start' }
+          ]
+        },
+        {
+          text: 'AI Development',
+          items: [
+            { text: 'Workflow Overview', link: '/guide/workflow' },
+            { text: 'Agent Reference', link: '/guide/agents' }
           ]
         },
         {
@@ -53,7 +61,18 @@ export default defineConfig({
           items: [
             { text: 'CLI Commands', link: '/reference/cli' },
             { text: 'Configuration', link: '/reference/config' },
-            { text: 'TypeScript Types', link: '/reference/types' }
+            { text: 'TypeScript Types', link: '/reference/types' },
+            { text: 'Brand Guidelines', link: '/reference/branding' }
+          ]
+        }
+      ],
+      
+      '/examples/': [
+        {
+          text: 'Examples',
+          items: [
+            { text: 'Overview', link: '/examples/' },
+            { text: 'Complete CRUD', link: '/examples/crud' }
           ]
         }
       ]

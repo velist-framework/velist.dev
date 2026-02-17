@@ -51,7 +51,7 @@ cd my-app
 bun run dev
 ```
 
-Open http://localhost:3000 and login with:
+Open `http://localhost:3000` and login with:
 - Email: `admin@example.com`
 - Password: `password123`
 
@@ -70,6 +70,6 @@ Open http://localhost:3000 and login with:
 
 ## Next Steps
 
-- [Installation](/guide/installation) — Detailed setup instructions
-- [Quick Start](/guide/quick-start) — Build your first feature
-- [Vertical Slicing](/guide/vertical-slicing) — Understand the architecture
+- [Installation](./installation) — Detailed setup instructions
+- [Quick Start](./quick-start) — Build your first feature
+- [Vertical Slicing](./vertical-slicing) — Understand the architecture

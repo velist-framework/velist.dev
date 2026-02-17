@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <linearGradient id="purple" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#d8b4fe"/>
+      <stop offset="100%" stop-color="#9333ea"/>
+    </linearGradient>
+    <linearGradient id="teal" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#5eead4"/>
+      <stop offset="100%" stop-color="#0d9488"/>
+    </linearGradient>
+    <linearGradient id="indigo" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#a5b4fc"/>
+      <stop offset="100%" stop-color="#4f46e5"/>
+    </linearGradient>
+    <linearGradient id="violet" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#c4b5fd"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Top Left: height 35px -->
+  <path d="M 25 25 L 90 25 L 100 60 L 35 60 Z" fill="url(#purple)"/>
+  
+  <!-- Top Right: height 35px -->
+  <path d="M 100 25 L 165 25 L 155 60 L 90 60 Z" fill="url(#teal)"/>
+  
+  <!-- Middle: height 35px -->
+  <path d="M 35 65 L 155 65 L 140 100 L 50 100 Z" fill="url(#indigo)"/>
+  
+  <!-- Bottom: height 35px -->
+  <path d="M 55 105 L 135 105 L 120 140 L 70 140 Z" fill="url(#violet)"/>
+</svg>

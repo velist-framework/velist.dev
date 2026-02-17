@@ -3,11 +3,10 @@ layout: home
 
 hero:
   name: "Velist"
-  text: "Features-first fullstack framework"
-  text: "Velocity + List"
-  tagline: Features-first fullstack framework. Build features, not folder structures.
+  text: "Velocity List"
+  tagline: AI-first fullstack framework. Let agents build cool app for you.
   image:
-    src: /logo.svg
+    src: /logo.png
     alt: Velist
   actions:
     - theme: brand
@@ -18,6 +17,10 @@ hero:
       link: https://github.com/velist-framework/velist
 
 features:
+  - icon: 🤖
+    title: AI-First Development
+    details: Multi-agent workflow with mandatory review points. Product → Tech Lead → Developer → QA → DevOps.
+  
   - icon: 🗂️
     title: Vertical Slicing
     details: One folder = one complete feature. No more jumping between controllers, models, and views.
@@ -29,10 +32,6 @@ features:
   - icon: 🔒
     title: Type Safe
     details: End-to-end TypeScript from database schema to UI props. Catch errors at compile time.
-  
-  - icon: 🎨
-    title: Inline Styling
-    details: Tailwind CSS utility classes directly in your components. No atomic component abstractions.
   
   - icon: 🔄
     title: Inertia.js
