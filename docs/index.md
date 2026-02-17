@@ -4,7 +4,8 @@ layout: home
 hero:
   name: "Velist"
   text: "Features-first fullstack framework"
-  tagline: Build features, not folder structures. Powered by Elysia, Svelte 5, and Bun.
+  text: "Velocity + List"
+  tagline: Features-first fullstack framework. Build features, not folder structures.
   image:
     src: /logo.svg
     alt: Velist
