@@ -1,6 +1,6 @@
 # Quick Start
 
-This guide will walk you through creating your first feature in Velist. By the end, you'll have a working "Tasks" feature with full CRUD operations.
+This guide will walk you through building a **complete full-featured application** with Velist. Choose your path: let AI agents build 99% of it, or code it yourself to learn the internals.
 
 ## Prerequisites
 
@@ -9,21 +9,21 @@ This guide will walk you through creating your first feature in Velist. By the e
 
 ## Create a New Project
 
+One command creates everything — the installer handles cloning, dependencies, database setup, and environment configuration.
+
 ```bash
-# Create project using Bun
+# Create project (interactive mode)
 bun create velist my-app
+```
 
-# Enter directory
+The CLI will ask you:
+- **Install dependencies?** (default: yes) — runs `bun install`
+- **Setup database?** (default: yes) — runs migrations and seeds
+
+Then simply:
+
+```bash
 cd my-app
-
-# Setup environment
-cp .env.example .env
-
-# Setup database
-bun run db:migrate
-bun run db:seed
-
-# Start development
 bun run dev
 ```
 
@@ -33,13 +33,59 @@ Your app is now running at:
 
 Default login: `admin@example.com` / `password123`
 
+::: tip What the installer does for you
+- ✅ Clones the starter template
+- ✅ Initializes git repository
+- ✅ Generates secure JWT secret in `.env`
+- ✅ Updates `package.json` with your project name
+- ✅ Installs dependencies (if selected)
+- ✅ Runs database migrations & seeds (if selected)
+:::
+
 ---
 
-## Create Your First Feature
+## Build Your Application
 
-Let's build a **Tasks** feature with CRUD operations. In Velist, everything for a feature lives in one folder.
+Now let's build a **complete Task Management Application**. Choose your path:
 
-### Step 1: Create Folder Structure
+:::: tabs
+
+### AI-Powered 🚀 (Recommended)
+
+Describe your app. Agents build everything.
+
+```
+@workflow/agents/product.md
+
+Build a Task Management SaaS for small teams.
+Users can create tasks, assign to team members, 
+set deadlines, and track progress.
+```
+
+**That's it.** The agents handle the rest:
+- **Product** → Writes specs & user stories
+- **Tech Lead** → Designs database & architecture  
+- **Developer** → Codes all features
+- **QA** → Tests everything
+- **DevOps** → Deploys to production
+
+You just review and say "yes" or "change this."
+
+[Learn more about AI Workflow →](./workflow)
+
+### Manual 💻
+
+Build it yourself to understand the internals. Follow the steps below.
+
+:::
+
+---
+
+### Manual Implementation
+
+If you chose the manual route, here's how to build a Tasks application step by step. In Velist, everything lives in feature folders.
+
+#### Step 1: Create Folder Structure
 
 ```bash
 mkdir -p src/features/tasks/pages
@@ -47,9 +93,25 @@ touch src/features/tasks/{api.ts,service.ts,repository.ts}
 touch src/features/tasks/pages/{Index.svelte,Create.svelte,Edit.svelte}
 ```
 
-### Step 2: Update Database Schema
+#### Step 2: Update Database Schema
 
-Add the tasks table to `src/features/_core/database/connection.ts`:
+Edit `src/features/_core/database/schema.ts`:
+
+```typescript
+import { sqliteTable, text } from 'drizzle-orm/sqlite-core'
+import { sql } from 'drizzle-orm'
+
+export const tasks = sqliteTable('tasks', {
+  id: text('id').primaryKey(),
+  title: text('title').notNull(),
+  description: text('description'),
+  status: text('status').notNull().default('pending'),
+  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+})
+```
+
+Then add TypeScript types to `src/features/_core/database/connection.ts`:
 
 ```typescript
 export interface DatabaseSchema {
@@ -65,14 +127,14 @@ export interface DatabaseSchema {
 }
 ```
 
-### Step 3: Create Migration
+#### Step 3: Create Migration
 
 ```bash
 bun run db:generate
 bun run db:migrate
 ```
 
-### Step 4: Implement Repository
+#### Step 4: Implement Repository
 
 Create `src/features/tasks/repository.ts`:
 
@@ -121,7 +183,7 @@ export class TaskRepository {
 }
 ```
 
-### Step 5: Implement Service
+#### Step 5: Implement Service
 
 Create `src/features/tasks/service.ts`:
 
@@ -172,38 +234,33 @@ export class TaskService {
 }
 ```
 
-### Step 6: Implement API Routes
+#### Step 6: Implement API Routes
 
 Create `src/features/tasks/api.ts`:
 
 ```typescript
-import { Elysia } from 'elysia'
-import { authApi } from '../_core/auth/api'
+import { createProtectedApi } from '../_core/auth/protected'
 import { TaskService, CreateTaskSchema, UpdateTaskSchema } from './service'
-import { inertia, type Inertia } from '../../inertia/plugin'
 
-export const taskApi = new Elysia({ prefix: '/tasks' })
-  .use(authApi)
-  .auth(true)  // Require authentication
-  .use(inertia())
+export const taskApi = createProtectedApi('/tasks')
   .derive(() => ({ taskService: new TaskService() }))
   
   // List all tasks
   .get('/', async (ctx) => {
-    const { inertia, taskService } = ctx as typeof ctx & { inertia: Inertia }
+    const { inertia, taskService } = ctx
     const tasks = await taskService.getAll()
-    return inertia.render('tasks/Index', { tasks })
+    const user = (ctx as any).user
+    return inertia.render('tasks/Index', { tasks, user })
   })
   
   // Show create form
   .get('/create', (ctx) => {
-    const { inertia } = ctx as typeof ctx & { inertia: Inertia }
-    return inertia.render('tasks/Create', { errors: {} })
+    return ctx.inertia.render('tasks/Create', { errors: {} })
   })
   
   // Store new task
   .post('/', async (ctx) => {
-    const { body, taskService, inertia } = ctx as typeof ctx & { inertia: Inertia }
+    const { body, taskService, inertia } = ctx
     try {
       await taskService.create(body)
       return inertia.redirect('/tasks')
@@ -214,7 +271,7 @@ export const taskApi = new Elysia({ prefix: '/tasks' })
   
   // Show edit form
   .get('/:id/edit', async (ctx) => {
-    const { params, taskService, inertia } = ctx as typeof ctx & { inertia: Inertia }
+    const { params, taskService, inertia } = ctx
     const task = await taskService.getById(params.id)
     if (!task) {
       return inertia.render('errors/404', { path: ctx.request.url })
@@ -224,7 +281,7 @@ export const taskApi = new Elysia({ prefix: '/tasks' })
   
   // Update task
   .put('/:id', async (ctx) => {
-    const { params, body, taskService, inertia } = ctx as typeof ctx & { inertia: Inertia }
+    const { params, body, taskService, inertia } = ctx
     try {
       await taskService.update(params.id, body)
       return inertia.redirect('/tasks')
@@ -239,13 +296,13 @@ export const taskApi = new Elysia({ prefix: '/tasks' })
   
   // Delete task
   .delete('/:id', async (ctx) => {
-    const { params, taskService, inertia } = ctx as typeof ctx & { inertia: Inertia }
+    const { params, taskService, inertia } = ctx
     await taskService.delete(params.id)
     return inertia.redirect('/tasks')
   })
 ```
 
-### Step 7: Create Svelte Pages
+#### Step 7: Create Svelte Pages
 
 **Index.svelte** (`src/features/tasks/pages/Index.svelte`):
 
@@ -253,8 +310,10 @@ export const taskApi = new Elysia({ prefix: '/tasks' })
 <script lang="ts">
   import { useForm } from '@inertiajs/svelte'
   import { Plus, Pencil, Trash } from 'lucide-svelte'
+  import AppLayout from '$shared/layouts/AppLayout.svelte'
   
   interface Props {
+    user: { id: string; email: string; name: string }
     tasks: Array<{
       id: string
       title: string
@@ -263,7 +322,7 @@ export const taskApi = new Elysia({ prefix: '/tasks' })
     }>
   }
   
-  let { tasks }: Props = $props()
+  let { user, tasks }: Props = $props()
   
   const deleteForm = useForm({})
   
@@ -282,60 +341,62 @@ export const taskApi = new Elysia({ prefix: '/tasks' })
   }
 </script>
 
-<div class="p-6 max-w-5xl mx-auto">
-  <div class="flex justify-between items-center mb-6">
-    <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Tasks</h1>
-    <a href="/tasks/create" class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
-      <Plus class="w-4 h-4" />
-      New Task
-    </a>
-  </div>
-  
-  <div class="bg-white dark:bg-slate-800 rounded-lg shadow overflow-hidden">
-    <table class="w-full">
-      <thead class="bg-slate-50 dark:bg-slate-700">
-        <tr>
-          <th class="px-4 py-3 text-left text-sm font-medium text-slate-700 dark:text-slate-300">Title</th>
-          <th class="px-4 py-3 text-left text-sm font-medium text-slate-700 dark:text-slate-300">Status</th>
-          <th class="px-4 py-3 text-right text-sm font-medium text-slate-700 dark:text-slate-300">Actions</th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
-        {#each tasks as task}
-          <tr>
-            <td class="px-4 py-3">
-              <div class="text-slate-900 dark:text-white font-medium">{task.title}</div>
-              {#if task.description}
-                <div class="text-sm text-slate-500 dark:text-slate-400">{task.description}</div>
-              {/if}
-            </td>
-            <td class="px-4 py-3">
-              <span class="inline-flex px-2 py-1 text-xs rounded-full {statusBadgeClass(task.status)}">
-                {task.status}
-              </span>
-            </td>
-            <td class="px-4 py-3 text-right">
-              <div class="flex justify-end gap-2">
-                <a href="/tasks/{task.id}/edit" class="p-1 text-slate-600 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400">
-                  <Pencil class="w-4 h-4" />
-                </a>
-                <button onclick={() => deleteTask(task.id)} class="p-1 text-slate-600 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400">
-                  <Trash class="w-4 h-4" />
-                </button>
-              </div>
-            </td>
-          </tr>
-        {/each}
-      </tbody>
-    </table>
+<AppLayout title="Tasks" {user}>
+  <div class="p-6 max-w-5xl mx-auto">
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Tasks</h1>
+      <a href="/tasks/create" class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+        <Plus class="w-4 h-4" />
+        New Task
+      </a>
+    </div>
     
-    {#if tasks.length === 0}
-      <div class="p-8 text-center text-slate-500 dark:text-slate-400">
-        No tasks yet. Create your first task!
-      </div>
-    {/if}
+    <div class="bg-white dark:bg-slate-800 rounded-lg shadow overflow-hidden">
+      <table class="w-full">
+        <thead class="bg-slate-50 dark:bg-slate-700">
+          <tr>
+            <th class="px-4 py-3 text-left text-sm font-medium text-slate-700 dark:text-slate-300">Title</th>
+            <th class="px-4 py-3 text-left text-sm font-medium text-slate-700 dark:text-slate-300">Status</th>
+            <th class="px-4 py-3 text-right text-sm font-medium text-slate-700 dark:text-slate-300">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+          {#each tasks as task}
+            <tr>
+              <td class="px-4 py-3">
+                <div class="text-slate-900 dark:text-white font-medium">{task.title}</div>
+                {#if task.description}
+                  <div class="text-sm text-slate-500 dark:text-slate-400">{task.description}</div>
+                {/if}
+              </td>
+              <td class="px-4 py-3">
+                <span class="inline-flex px-2 py-1 text-xs rounded-full {statusBadgeClass(task.status)}">
+                  {task.status}
+                </span>
+              </td>
+              <td class="px-4 py-3 text-right">
+                <div class="flex justify-end gap-2">
+                  <a href="/tasks/{task.id}/edit" class="p-1 text-slate-600 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400">
+                    <Pencil class="w-4 h-4" />
+                  </a>
+                  <button onclick={() => deleteTask(task.id)} class="p-1 text-slate-600 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400">
+                    <Trash class="w-4 h-4" />
+                  </button>
+                </div>
+              </td>
+            </tr>
+          {/each}
+        </tbody>
+      </table>
+      
+      {#if tasks.length === 0}
+        <div class="p-8 text-center text-slate-500 dark:text-slate-400">
+          No tasks yet. Create your first task!
+        </div>
+      {/if}
+    </div>
   </div>
-</div>
+</AppLayout>
 ```
 
 **Create.svelte** (`src/features/tasks/pages/Create.svelte`):
@@ -343,12 +404,14 @@ export const taskApi = new Elysia({ prefix: '/tasks' })
 ```svelte
 <script lang="ts">
   import { useForm } from '@inertiajs/svelte'
+  import AppLayout from '$shared/layouts/AppLayout.svelte'
   
   interface Props {
+    user: { id: string; email: string; name: string }
     errors: Record<string, string>
   }
   
-  let { errors }: Props = $props()
+  let { user, errors }: Props = $props()
   
   const form = useForm({
     title: '',
@@ -361,46 +424,48 @@ export const taskApi = new Elysia({ prefix: '/tasks' })
   }
 </script>
 
-<div class="p-6 max-w-2xl mx-auto">
-  <h1 class="text-2xl font-bold text-slate-900 dark:text-white mb-6">New Task</h1>
-  
-  <form onsubmit={submit} class="bg-white dark:bg-slate-800 rounded-lg shadow p-6 space-y-4">
-    <div>
-      <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Title</label>
-      <input
-        type="text"
-        bind:value={$form.title}
-        class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
-        required
-      />
-      {#if errors.title}
-        <p class="mt-1 text-sm text-red-600">{errors.title}</p>
-      {/if}
-    </div>
+<AppLayout title="New Task" {user}>
+  <div class="p-6 max-w-2xl mx-auto">
+    <h1 class="text-2xl font-bold text-slate-900 dark:text-white mb-6">New Task</h1>
     
-    <div>
-      <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Description</label>
-      <textarea
-        bind:value={$form.description}
-        rows="3"
-        class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
-      ></textarea>
-    </div>
-    
-    <div class="flex gap-3 pt-4">
-      <button
-        type="submit"
-        disabled={$form.processing}
-        class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
-      >
-        {$form.processing ? 'Creating...' : 'Create Task'}
-      </button>
-      <a href="/tasks" class="px-4 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700">
-        Cancel
-      </a>
-    </div>
-  </form>
-</div>
+    <form onsubmit={submit} class="bg-white dark:bg-slate-800 rounded-lg shadow p-6 space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Title</label>
+        <input
+          type="text"
+          bind:value={$form.title}
+          class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+          required
+        />
+        {#if errors.title}
+          <p class="mt-1 text-sm text-red-600">{errors.title}</p>
+        {/if}
+      </div>
+      
+      <div>
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Description</label>
+        <textarea
+          bind:value={$form.description}
+          rows="3"
+          class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+        ></textarea>
+      </div>
+      
+      <div class="flex gap-3 pt-4">
+        <button
+          type="submit"
+          disabled={$form.processing}
+          class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+        >
+          {$form.processing ? 'Creating...' : 'Create Task'}
+        </button>
+        <a href="/tasks" class="px-4 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700">
+          Cancel
+        </a>
+      </div>
+    </form>
+  </div>
+</AppLayout>
 ```
 
 **Edit.svelte** (`src/features/tasks/pages/Edit.svelte`):
@@ -408,8 +473,10 @@ export const taskApi = new Elysia({ prefix: '/tasks' })
 ```svelte
 <script lang="ts">
   import { useForm } from '@inertiajs/svelte'
+  import AppLayout from '$shared/layouts/AppLayout.svelte'
   
   interface Props {
+    user: { id: string; email: string; name: string }
     task: {
       id: string
       title: string
@@ -419,7 +486,7 @@ export const taskApi = new Elysia({ prefix: '/tasks' })
     errors: Record<string, string>
   }
   
-  let { task, errors }: Props = $props()
+  let { user, task, errors }: Props = $props()
   
   const form = useForm({
     title: task.title,
@@ -433,58 +500,60 @@ export const taskApi = new Elysia({ prefix: '/tasks' })
   }
 </script>
 
-<div class="p-6 max-w-2xl mx-auto">
-  <h1 class="text-2xl font-bold text-slate-900 dark:text-white mb-6">Edit Task</h1>
-  
-  <form onsubmit={submit} class="bg-white dark:bg-slate-800 rounded-lg shadow p-6 space-y-4">
-    <div>
-      <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Title</label>
-      <input
-        type="text"
-        bind:value={$form.title}
-        class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
-        required
-      />
-    </div>
+<AppLayout title="Edit Task" {user}>
+  <div class="p-6 max-w-2xl mx-auto">
+    <h1 class="text-2xl font-bold text-slate-900 dark:text-white mb-6">Edit Task</h1>
     
-    <div>
-      <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Description</label>
-      <textarea
-        bind:value={$form.description}
-        rows="3"
-        class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
-      ></textarea>
-    </div>
-    
-    <div>
-      <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Status</label>
-      <select
-        bind:value={$form.status}
-        class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
-      >
-        <option value="pending">Pending</option>
-        <option value="in_progress">In Progress</option>
-        <option value="completed">Completed</option>
-      </select>
-    </div>
-    
-    <div class="flex gap-3 pt-4">
-      <button
-        type="submit"
-        disabled={$form.processing}
-        class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
-      >
-        {$form.processing ? 'Saving...' : 'Save Changes'}
-      </button>
-      <a href="/tasks" class="px-4 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700">
-        Cancel
-      </a>
-    </div>
-  </form>
-</div>
+    <form onsubmit={submit} class="bg-white dark:bg-slate-800 rounded-lg shadow p-6 space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Title</label>
+        <input
+          type="text"
+          bind:value={$form.title}
+          class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+          required
+        />
+      </div>
+      
+      <div>
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Description</label>
+        <textarea
+          bind:value={$form.description}
+          rows="3"
+          class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+        ></textarea>
+      </div>
+      
+      <div>
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Status</label>
+        <select
+          bind:value={$form.status}
+          class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+        >
+          <option value="pending">Pending</option>
+          <option value="in_progress">In Progress</option>
+          <option value="completed">Completed</option>
+        </select>
+      </div>
+      
+      <div class="flex gap-3 pt-4">
+        <button
+          type="submit"
+          disabled={$form.processing}
+          class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+        >
+          {$form.processing ? 'Saving...' : 'Save Changes'}
+        </button>
+        <a href="/tasks" class="px-4 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700">
+          Cancel
+        </a>
+      </div>
+    </form>
+  </div>
+</AppLayout>
 ```
 
-### Step 8: Mount in Bootstrap
+#### Step 8: Mount in Bootstrap
 
 Add to `src/bootstrap.ts`:
 

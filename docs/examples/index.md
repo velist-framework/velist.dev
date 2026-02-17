@@ -47,33 +47,41 @@ export class TaskService {
 }
 ```
 
-### API Route
+### Protected API Route
 
 ```typescript
-export const taskApi = new Elysia({ prefix: '/tasks' })
-  .use(authApi)
-  .auth(true)
-  .use(inertia())
+import { createProtectedApi } from '../_core/auth/protected'
+import { TaskService } from './service'
+
+export const taskApi = createProtectedApi('/tasks')
+  .derive(() => ({ taskService: new TaskService() }))
   
   .get('/', async (ctx) => {
-    const tasks = await service.getAll()
-    return ctx.inertia.render('tasks/Index', { tasks })
+    const { inertia, taskService } = ctx
+    const tasks = await taskService.getAll()
+    const user = (ctx as any).user
+    return ctx.inertia.render('tasks/Index', { tasks, user })
   })
 ```
 
-### Svelte Page
+### Svelte Page with AppLayout
 
 ```svelte
 <script lang="ts">
+  import AppLayout from '$shared/layouts/AppLayout.svelte'
+  
   interface Props {
+    user: { id: string; email: string; name: string }
     tasks: Array<{ id: string; title: string }>
   }
-  let { tasks }: Props = $props()
+  let { user, tasks }: Props = $props()
 </script>
 
-<ul>
-  {#each tasks as task}
-    <li>{task.title}</li>
-  {/each}
-</ul>
+<AppLayout title="Tasks" {user}>
+  <ul>
+    {#each tasks as task}
+      <li>{task.title}</li>
+    {/each}
+  </ul>
+</AppLayout>
 ```

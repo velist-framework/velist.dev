@@ -9,7 +9,7 @@ Velist includes built-in JWT-based authentication.
 - JWT tokens stored in HTTP-only cookies
 - 7-day expiration (30 days with "remember me")
 - Password hashing with Bun.password
-- Protected routes with `.auth()` macro
+- Protected routes with `createProtectedApi()` helper
 
 ---
 
@@ -26,22 +26,21 @@ Password: password123
 
 ## Protecting Routes
 
-Use `authApi` and `.auth(true)`:
+**Use `createProtectedApi()` helper** - Don't repeat auth boilerplate:
 
 ```typescript
-import { Elysia } from 'elysia'
-import { authApi } from '../_core/auth/api'
-import { inertia } from '../../inertia/plugin'
+import { createProtectedApi } from '../_core/auth/protected'
+import { UserService } from './service'
 
-export const protectedApi = new Elysia({ prefix: '/dashboard' })
-  .use(authApi)      // Add auth context
-  .auth(true)        // Require authentication
-  .use(inertia())
-  
-  .get('/', (ctx) => {
-    // Only authenticated users can access
+export const usersApi = createProtectedApi('/users')
+  .derive(() => ({ userService: new UserService() }))
+
+  // List all users
+  .get('/', async (ctx) => {
+    const { inertia, userService } = ctx
+    const users = await userService.getAll()
     const user = (ctx as any).user
-    return ctx.inertia.render('dashboard/Index', { user })
+    return inertia.render('users/Index', { users, user })
   })
 ```
 
@@ -113,5 +112,6 @@ Auth logic is in `features/_core/auth/`:
 | `api.ts` | Login, register, logout routes |
 | `service.ts` | Auth business logic |
 | `repository.ts` | User database queries |
+| `protected.ts` | `createProtectedApi()` helper |
 
 Modify these files to customize authentication behavior.

@@ -4,7 +4,37 @@ Deploy Velist with Docker.
 
 ---
 
-## Dockerfile
+## Quick Deploy with Docker
+
+```bash
+# Build and run
+docker build -t velist-app .
+docker run -d -p 3000:3000 -v $(pwd)/db:/app/db --name velist-app velist-app
+```
+
+---
+
+## AI-Powered Deployment
+
+Use the DevOps Agent for automated Docker deployment:
+
+```
+@workflow/agents/devops.md
+
+Deploy to production using Docker.
+```
+
+The DevOps Agent will generate complete deployment configuration including:
+- Optimized Dockerfile
+- Docker Compose setup
+- Health checks
+- Monitoring configuration
+
+---
+
+## Manual Docker Setup
+
+### Dockerfile
 
 Create `Dockerfile`:
 
@@ -35,17 +65,13 @@ EXPOSE 3000
 CMD ["bun", "src/bootstrap.ts"]
 ```
 
----
-
-## Build Image
+### Build Image
 
 ```bash
 docker build -t velist-app .
 ```
 
----
-
-## Run Container
+### Run Container
 
 ```bash
 docker run -d \
@@ -76,10 +102,14 @@ services:
     environment:
       - NODE_ENV=production
       - JWT_SECRET=${JWT_SECRET}
-      - VITE_URL=${VITE_URL:-http://localhost:3000}
     volumes:
       - ./db:/app/db
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 ```
 
 Run:
@@ -96,7 +126,6 @@ Create `.env` file:
 
 ```bash
 JWT_SECRET=your-secure-random-string
-VITE_URL=https://your-domain.com
 ```
 
 ---
@@ -114,17 +143,35 @@ volumes:
 
 ---
 
+## Deployment Checklist
+
+- [ ] Dockerfile optimized
+- [ ] Docker Compose configured
+- [ ] Environment variables set
+- [ ] Database volume mounted
+- [ ] Health check configured
+- [ ] Container running: `docker ps`
+- [ ] Health check pass: `curl http://localhost:3000/health`
+
+---
+
 ## Useful Commands
 
 ```bash
 # View logs
 docker logs velist-app
 
+# View real-time logs
+docker logs -f velist-app
+
 # Restart
 docker restart velist-app
 
 # Shell into container
 docker exec -it velist-app /bin/bash
+
+# Run migrations
+docker exec velist-app bun run db:migrate
 
 # Stop and remove
 docker stop velist-app
@@ -135,7 +182,8 @@ docker rm velist-app
 
 ## Production Tips
 
-1. Use reverse proxy (nginx, traefik) for SSL
-2. Set up log rotation
-3. Monitor container health
-4. Backup database regularly
+1. **Use reverse proxy** (nginx, traefik) for SSL termination
+2. **Set up log rotation** to prevent disk full
+3. **Monitor container health** with `docker stats`
+4. **Backup database regularly** from host volume
+5. **Use specific Bun version** in Dockerfile (e.g., `oven/bun:1.0.0`)

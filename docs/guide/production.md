@@ -4,7 +4,53 @@ Deploying Velist to production.
 
 ---
 
-## Build Command
+## Quick Deploy
+
+```bash
+# 1. Build application
+bun run build
+
+# 2. Run database migrations
+bun run db:migrate
+
+# 3. Start production server
+bun src/bootstrap.ts
+```
+
+---
+
+## AI-Powered Deployment (Recommended)
+
+Use the DevOps Agent for automated deployment:
+
+```
+@workflow/agents/devops.md
+
+Deploy to production.
+```
+
+The DevOps Agent will:
+1. **Build application** — Verify build success
+2. **Deploy to production** — Execute deployment steps
+3. **Verify deployment** — Run health checks
+4. **Setup monitoring** — Configure alerts
+5. **Generate deployment docs** — Create deliverables
+
+### Deliverables
+
+DevOps Agent produces:
+
+| File | Description |
+|------|-------------|
+| `DEPLOYMENT_GUIDE.md` | Step-by-step deployment instructions |
+| `INFRASTRUCTURE.md` | Server & infrastructure details |
+| `RELEASE_NOTES.md` | What's new in this release |
+
+---
+
+## Manual Deployment
+
+### Build Command
 
 ```bash
 bun run build
@@ -15,9 +61,7 @@ This creates:
 - `static/` — Copied assets
 - `dist/manifest.json` — Asset manifest
 
----
-
-## Environment Variables
+### Environment Variables
 
 Required in production:
 
@@ -26,7 +70,6 @@ NODE_ENV=production
 PORT=3000
 APP_VERSION=1.0.0
 JWT_SECRET=your-secure-random-string
-VITE_URL=https://your-domain.com
 ```
 
 **Important:** Change `JWT_SECRET` to a secure random string (32+ characters).
@@ -35,29 +78,40 @@ VITE_URL=https://your-domain.com
 
 ## Production Checklist
 
-- [ ] Set `NODE_ENV=production`
-- [ ] Change `JWT_SECRET` to secure value
-- [ ] Build assets: `bun run build`
-- [ ] Run migrations: `bun run db:migrate`
-- [ ] Set correct `VITE_URL`
+### Pre-Deployment
+- [ ] Build successful: `bun run build`
+- [ ] Database migrated: `bun run db:migrate`
+- [ ] Environment variables configured
+- [ ] JWT_SECRET changed to secure value
+
+### Deployment
+- [ ] Application deployed to server
+- [ ] Health check pass: `curl http://localhost:3000`
+- [ ] SSL certificate active
+- [ ] Domain configured correctly
+
+### Post-Deployment
+- [ ] Monitoring active
+- [ ] Backup configured
+- [ ] Error tracking enabled
 
 ---
 
 ## Start Production Server
 
+### Direct
+
 ```bash
 bun src/bootstrap.ts
 ```
 
-Or with PM2:
+### With PM2 (Recommended)
 
 ```bash
 pm2 start bun --name "velist-app" -- src/bootstrap.ts
 ```
 
----
-
-## PM2 Commands
+**PM2 Commands:**
 
 ```bash
 # Check status
@@ -72,7 +126,7 @@ pm2 restart velist-app
 # Stop
 pm2 stop velist-app
 
-# Save config
+# Save config & enable startup
 pm2 save
 pm2 startup
 ```
@@ -104,6 +158,37 @@ Should return `200 OK` or `302 Redirect`.
 
 ---
 
+## Monitoring
+
+### Basic Health Check Endpoint
+
+Velist includes a built-in health check at `GET /health`:
+
+```bash
+curl http://localhost:3000/health
+```
+
+Expected response:
+```json
+{
+  "status": "healthy",
+  "timestamp": "2026-01-15T10:30:00.000Z",
+  "version": "1.0.0"
+}
+```
+
+### Log Monitoring
+
+```bash
+# View real-time logs
+pm2 logs velist-app
+
+# View last 100 lines
+pm2 logs velist-app --lines 100
+```
+
+---
+
 ## Troubleshooting
 
 ### Port already in use
@@ -121,4 +206,46 @@ chmod +x db/
 ```bash
 cp .env.example .env
 # Edit .env with production values
+```
+
+### Database locked
+```bash
+# Check for hanging processes
+lsof db/app.sqlite
+
+# Restart application
+pm2 restart velist-app
+```
+
+---
+
+## Zero-Downtime Deployment
+
+For zero-downtime updates:
+
+```bash
+# 1. Build on server
+bun run build
+
+# 2. Run migrations
+bun run db:migrate
+
+# 3. Reload with PM2 (zero-downtime)
+pm2 reload velist-app
+```
+
+---
+
+## Rollback
+
+If deployment fails:
+
+```bash
+# Restore database from backup
+cp db/backup-YYYYMMDD.sqlite db/app.sqlite
+
+# Restart with previous code
+git checkout [previous-commit]
+bun run build
+pm2 restart velist-app
 ```

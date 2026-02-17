@@ -16,17 +16,39 @@ Building a **Products** feature with:
 
 ## Database Schema
 
+Edit `src/features/_core/database/schema.ts`:
+
 ```typescript
-// Add to DatabaseSchema
-products: {
-  id: string
-  name: string
-  description: string | null
-  price: number
-  stock: number
-  category: string
-  created_at: string
-  updated_at: string
+import { sqliteTable, text, real, integer } from 'drizzle-orm/sqlite-core'
+import { sql } from 'drizzle-orm'
+
+export const products = sqliteTable('products', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  description: text('description'),
+  price: real('price').notNull(),
+  stock: integer('stock').notNull(),
+  category: text('category').notNull(),
+  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+})
+```
+
+Add TypeScript types to `src/features/_core/database/connection.ts`:
+
+```typescript
+export interface DatabaseSchema {
+  // ... existing tables
+  products: {
+    id: string
+    name: string
+    description: string | null
+    price: number
+    stock: number
+    category: string
+    created_at: string
+    updated_at: string
+  }
 }
 ```
 
@@ -171,20 +193,16 @@ export class ProductService {
 
 ```typescript
 // src/features/products/api.ts
-import { Elysia } from 'elysia'
-import { authApi } from '../_core/auth/api'
+import { createProtectedApi } from '../_core/auth/protected'
 import { ProductService, CreateProductSchema, UpdateProductSchema } from './service'
-import { inertia, type Inertia } from '../../inertia/plugin'
 
-export const productApi = new Elysia({ prefix: '/products' })
-  .use(authApi)
-  .auth(true)
-  .use(inertia())
+export const productApi = createProtectedApi('/products')
   .derive(() => ({ productService: new ProductService() }))
   
   // List with pagination
   .get('/', async (ctx) => {
-    const { inertia, productService, query } = ctx as any
+    const { inertia, productService } = ctx
+    const query = ctx.query as Record<string, string>
     
     const page = Number(query.page) || 1
     const search = query.search || ''
@@ -195,30 +213,33 @@ export const productApi = new Elysia({ prefix: '/products' })
       productService.getCategories()
     ])
     
+    const user = (ctx as any).user
+    
     return inertia.render('products/Index', {
       ...result,
       categories,
-      filters: { search, category }
+      filters: { search, category },
+      user
     })
   })
   
   // Create form
   .get('/create', async (ctx) => {
-    const { inertia, productService } = ctx as any
+    const { inertia, productService } = ctx
     const categories = await productService.getCategories()
     return inertia.render('products/Create', { categories, errors: {} })
   })
   
   // Store
   .post('/', async (ctx) => {
-    const { body, productService, inertia } = ctx as any
+    const { body, productService, inertia } = ctx
     await productService.create(body)
     return inertia.redirect('/products')
   }, { body: CreateProductSchema })
   
   // Edit form
   .get('/:id/edit', async (ctx) => {
-    const { params, productService, inertia } = ctx as any
+    const { params, productService, inertia } = ctx
     const [product, categories] = await Promise.all([
       productService.getById(params.id),
       productService.getCategories()
@@ -228,14 +249,14 @@ export const productApi = new Elysia({ prefix: '/products' })
   
   // Update
   .put('/:id', async (ctx) => {
-    const { params, body, productService, inertia } = ctx as any
+    const { params, body, productService, inertia } = ctx
     await productService.update(params.id, body)
     return inertia.redirect('/products')
   }, { body: UpdateProductSchema })
   
   // Delete
   .delete('/:id', async (ctx) => {
-    const { params, productService, inertia } = ctx as any
+    const { params, productService, inertia } = ctx
     await productService.delete(params.id)
     return inertia.redirect('/products')
   })
@@ -250,8 +271,10 @@ export const productApi = new Elysia({ prefix: '/products' })
 <script lang="ts">
   import { router } from '@inertiajs/svelte'
   import { Plus, Pencil, Trash, ChevronLeft, ChevronRight } from 'lucide-svelte'
+  import AppLayout from '$shared/layouts/AppLayout.svelte'
   
   interface Props {
+    user: { id: string; email: string; name: string }
     items: Array<{
       id: string
       name: string
@@ -267,7 +290,7 @@ export const productApi = new Elysia({ prefix: '/products' })
     filters: { search: string; category: string }
   }
   
-  let { items, total, page, totalPages, categories, filters }: Props = $props()
+  let { user, items, total, page, totalPages, categories, filters }: Props = $props()
   
   let searchQuery = $state(filters.search)
   let selectedCategory = $state(filters.category)
@@ -299,109 +322,111 @@ export const productApi = new Elysia({ prefix: '/products' })
   }
 </script>
 
-<div class="p-6 max-w-6xl mx-auto">
-  <div class="flex justify-between items-center mb-6">
-    <h1 class="text-2xl font-bold text-slate-900 dark:text-white">
-      Products ({total})
-    </h1>
-    <a href="/products/create" class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
-      <Plus class="w-4 h-4" />
-      Add Product
-    </a>
-  </div>
-  
-  <!-- Filters -->
-  <div class="flex gap-4 mb-6">
-    <input
-      type="text"
-      placeholder="Search products..."
-      bind:value={searchQuery}
-      onchange={applyFilters}
-      class="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
-    />
+<AppLayout title="Products" {user}>
+  <div class="p-6 max-w-6xl mx-auto">
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-2xl font-bold text-slate-900 dark:text-white">
+        Products ({total})
+      </h1>
+      <a href="/products/create" class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+        <Plus class="w-4 h-4" />
+        Add Product
+      </a>
+    </div>
     
-    <select
-      bind:value={selectedCategory}
-      onchange={applyFilters}
-      class="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
-    >
-      <option value="">All Categories</option>
-      {#each categories as cat}
-        <option value={cat}>{cat}</option>
-      {/each}
-    </select>
-  </div>
-  
-  <!-- Table -->
-  <div class="bg-white dark:bg-slate-800 rounded-lg shadow overflow-hidden">
-    <table class="w-full">
-      <thead class="bg-slate-50 dark:bg-slate-700">
-        <tr>
-          <th class="px-4 py-3 text-left">Name</th>
-          <th class="px-4 py-3 text-left">Category</th>
-          <th class="px-4 py-3 text-right">Price</th>
-          <th class="px-4 py-3 text-right">Stock</th>
-          <th class="px-4 py-3 text-right">Actions</th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
-        {#each items as product}
-          <tr>
-            <td class="px-4 py-3 text-slate-900 dark:text-white">{product.name}</td>
-            <td class="px-4 py-3">
-              <span class="px-2 py-1 text-xs rounded-full bg-slate-100 dark:bg-slate-700">
-                {product.category}
-              </span>
-            </td>
-            <td class="px-4 py-3 text-right">{formatPrice(product.price)}</td>
-            <td class="px-4 py-3 text-right">
-              <span class={product.stock < 10 ? 'text-red-600' : ''}>
-                {product.stock}
-              </span>
-            </td>
-            <td class="px-4 py-3 text-right">
-              <div class="flex justify-end gap-2">
-                <a href="/products/{product.id}/edit" class="p-1 text-slate-600 hover:text-indigo-600">
-                  <Pencil class="w-4 h-4" />
-                </a>
-                <button onclick={() => deleteProduct(product.id)} class="p-1 text-slate-600 hover:text-red-600">
-                  <Trash class="w-4 h-4" />
-                </button>
-              </div>
-            </td>
-          </tr>
+    <!-- Filters -->
+    <div class="flex gap-4 mb-6">
+      <input
+        type="text"
+        placeholder="Search products..."
+        bind:value={searchQuery}
+        onchange={applyFilters}
+        class="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+      />
+      
+      <select
+        bind:value={selectedCategory}
+        onchange={applyFilters}
+        class="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+      >
+        <option value="">All Categories</option>
+        {#each categories as cat}
+          <option value={cat}>{cat}</option>
         {/each}
-      </tbody>
-    </table>
+      </select>
+    </div>
     
-    {#if items.length === 0}
-      <div class="p-8 text-center text-slate-500">No products found</div>
+    <!-- Table -->
+    <div class="bg-white dark:bg-slate-800 rounded-lg shadow overflow-hidden">
+      <table class="w-full">
+        <thead class="bg-slate-50 dark:bg-slate-700">
+          <tr>
+            <th class="px-4 py-3 text-left">Name</th>
+            <th class="px-4 py-3 text-left">Category</th>
+            <th class="px-4 py-3 text-right">Price</th>
+            <th class="px-4 py-3 text-right">Stock</th>
+            <th class="px-4 py-3 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+          {#each items as product}
+            <tr>
+              <td class="px-4 py-3 text-slate-900 dark:text-white">{product.name}</td>
+              <td class="px-4 py-3">
+                <span class="px-2 py-1 text-xs rounded-full bg-slate-100 dark:bg-slate-700">
+                  {product.category}
+                </span>
+              </td>
+              <td class="px-4 py-3 text-right">{formatPrice(product.price)}</td>
+              <td class="px-4 py-3 text-right">
+                <span class={product.stock < 10 ? 'text-red-600' : ''}>
+                  {product.stock}
+                </span>
+              </td>
+              <td class="px-4 py-3 text-right">
+                <div class="flex justify-end gap-2">
+                  <a href="/products/{product.id}/edit" class="p-1 text-slate-600 hover:text-indigo-600">
+                    <Pencil class="w-4 h-4" />
+                  </a>
+                  <button onclick={() => deleteProduct(product.id)} class="p-1 text-slate-600 hover:text-red-600">
+                    <Trash class="w-4 h-4" />
+                  </button>
+                </div>
+              </td>
+            </tr>
+          {/each}
+        </tbody>
+      </table>
+      
+      {#if items.length === 0}
+        <div class="p-8 text-center text-slate-500">No products found</div>
+      {/if}
+    </div>
+    
+    <!-- Pagination -->
+    {#if totalPages > 1}
+      <div class="flex justify-center items-center gap-2 mt-6">
+        <button
+          disabled={page <= 1}
+          onclick={() => goToPage(page - 1)}
+          class="p-2 border rounded-lg disabled:opacity-50"
+        >
+          <ChevronLeft class="w-4 h-4" />
+        </button>
+        
+        <span class="text-slate-600 dark:text-slate-400">
+          Page {page} of {totalPages}
+        </span>
+        
+        <button
+          disabled={page >= totalPages}
+          onclick={() => goToPage(page + 1)}
+          class="p-2 border rounded-lg disabled:opacity-50"
+        >
+          <ChevronRight class="w-4 h-4" />
+        </button>
+      </div>
     {/if}
   </div>
-  
-  <!-- Pagination -->
-  {#if totalPages > 1}
-    <div class="flex justify-center items-center gap-2 mt-6">
-      <button
-        disabled={page <= 1}
-        onclick={() => goToPage(page - 1)}
-        class="p-2 border rounded-lg disabled:opacity-50"
-      >
-        <ChevronLeft class="w-4 h-4" />
-      </button>
-      
-      <span class="text-slate-600 dark:text-slate-400">
-        Page {page} of {totalPages}
-      </span>
-      
-      <button
-        disabled={page >= totalPages}
-        onclick={() => goToPage(page + 1)}
-        class="p-2 border rounded-lg disabled:opacity-50"
-      >
-        <ChevronRight class="w-4 h-4" />
-      </button>
-    </div>
-  {/if}
-</div>
+</AppLayout>
 ```

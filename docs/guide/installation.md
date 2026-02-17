@@ -16,7 +16,7 @@ bun create velist my-app
 ### Using npx
 
 ```bash
-npx create-velist-app my-app
+npx create-velist my-app
 ```
 
 ### Interactive Mode

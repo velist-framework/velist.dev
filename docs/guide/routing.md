@@ -87,21 +87,31 @@ Use `:param` for dynamic segments:
 
 ## Protected Routes
 
-Use `authApi` and `.auth(true)` for authentication:
+**Use `createProtectedApi()` helper** for authenticated routes:
 
 ```typescript
-import { authApi } from '../_core/auth/api'
+import { createProtectedApi } from '../_core/auth/protected'
 
-export const protectedApi = new Elysia({ prefix: '/admin' })
-  .use(authApi)      // Add auth context
-  .auth(true)        // Require authentication
-  .use(inertia())
+export const protectedApi = createProtectedApi('/admin')
+  .derive(() => ({ adminService: new AdminService() }))
   
   .get('/', (ctx) => {
-    // Only authenticated users can access
+    const { inertia, adminService } = ctx
     const user = (ctx as any).user
-    return ctx.inertia.render('admin/Index', { user })
+    // Only authenticated users can access
+    return inertia.render('admin/Index', { user })
   })
+```
+
+### Accessing Current User
+
+```typescript
+.get('/profile', (ctx) => {
+  const user = (ctx as any).user
+  // { id, email, name, role }
+  
+  return ctx.inertia.render('profile/Index', { user })
+})
 ```
 
 ---
@@ -168,14 +178,98 @@ Validation errors automatically return to the form page.
 Use `.derive()` to add context:
 
 ```typescript
-.use(authApi)
-.derive(() => ({ 
-  itemService: new ItemService() 
-}))
+import { createProtectedApi } from '../_core/auth/protected'
+import { ItemService } from './service'
 
-.get('/', async (ctx) => {
-  const { itemService, inertia } = ctx as any
-  const items = await itemService.getAll()
-  return inertia.render('items/Index', { items })
-})
+export const itemApi = createProtectedApi('/items')
+  .derive(() => ({ 
+    itemService: new ItemService() 
+  }))
+
+  .get('/', async (ctx) => {
+    const { itemService, inertia } = ctx
+    const items = await itemService.getAll()
+    return inertia.render('items/Index', { items })
+  })
+```
+
+---
+
+## Common Patterns
+
+### Public Routes (No Auth)
+
+```typescript
+import { Elysia } from 'elysia'
+import { inertia } from '../../inertia/plugin'
+
+export const publicApi = new Elysia({ prefix: '/public' })
+  .use(inertia())
+  .get('/', (ctx) => {
+    return ctx.inertia.render('public/Index')
+  })
+```
+
+### Auth Pages (Login/Register)
+
+```typescript
+import { Elysia } from 'elysia'
+import { inertia } from '../../inertia/plugin'
+
+export const authPagesApi = new Elysia({ prefix: '/auth' })
+  .use(inertia())
+  .get('/login', (ctx) => {
+    return ctx.inertia.render('auth/Login', { errors: {} })
+  })
+```
+
+### CRUD Routes Pattern
+
+```typescript
+import { createProtectedApi } from '../_core/auth/protected'
+import { ItemService, CreateSchema, UpdateSchema } from './service'
+
+export const itemApi = createProtectedApi('/items')
+  .derive(() => ({ itemService: new ItemService() }))
+
+  // List
+  .get('/', async (ctx) => {
+    const { inertia, itemService } = ctx
+    const items = await itemService.getAll()
+    const user = (ctx as any).user
+    return inertia.render('items/Index', { items, user })
+  })
+
+  // Create form
+  .get('/create', (ctx) => {
+    return ctx.inertia.render('items/Create', { errors: {} })
+  })
+
+  // Store
+  .post('/', async (ctx) => {
+    const { body, itemService, inertia } = ctx
+    await itemService.create(body)
+    return inertia.redirect('/items')
+  }, { body: CreateSchema })
+
+  // Edit form
+  .get('/:id/edit', async (ctx) => {
+    const { params, itemService, inertia } = ctx
+    const item = await itemService.getById(params.id)
+    return inertia.render('items/Edit', { item, errors: {} })
+  })
+
+  // Update
+  .put('/:id', async (ctx) => {
+    const { params, body, itemService, inertia } = ctx
+    await itemService.update(params.id, body)
+    return inertia.redirect('/items')
+  }, { body: UpdateSchema })
+
+  // Delete
+  .delete('/:id', async (ctx) => {
+    const { params, itemService, inertia } = ctx
+    await itemService.delete(params.id)
+    return inertia.redirect('/items')
+  })
 ```
