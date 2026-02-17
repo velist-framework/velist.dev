@@ -26,7 +26,17 @@ bun run preview
 
 ## Deployment
 
-The site is automatically deployed to Vercel/Netlify on push to main.
+Deploy ke Cloudflare Pages:
+
+```bash
+# Deploy (otomatis ke project 'velist')
+bun run deploy
+
+# Atau manual
+bunx wrangler pages deploy docs/.vitepress/dist --project-name velist --branch main
+```
+
+⚠️ **Jangan ganti project name!** Selalu pakai `--project-name velist`
 
 ## Contributing
 

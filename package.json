@@ -6,9 +6,14 @@
   "scripts": {
     "dev": "vitepress dev docs",
     "build": "vitepress build docs",
-    "preview": "vitepress preview docs"
+    "preview": "vitepress preview docs",
+    "deploy": "./scripts/deploy.sh",
+    "deploy:manual": "echo 'Use: bun run deploy' || bunx wrangler pages deploy docs/.vitepress/dist --project-name velist --branch main"
   },
   "devDependencies": {
-    "vitepress": "^1.6.4"
+    "mermaid": "^11.12.2",
+    "vitepress": "^1.6.4",
+    "vitepress-plugin-mermaid": "^2.0.17",
+    "vitepress-plugin-tabs": "^0.7.3"
   }
 }
