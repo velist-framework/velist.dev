@@ -41,8 +41,8 @@ features:
     details: Built-in Docker support. One-click deploy to Cloudflare, Vercel, or your own VPS. CI/CD included.
   
   - icon: 🧪
-    title: Testing Included
-    details: E2E testing with Playwright setup out of the box. Unit tests with Bun. Coverage reports. No config needed.
+    title: Testing with Bun & Playwright
+    details: Unit tests with bun:test for fast feedback. E2E with Playwright for critical flows. Two-level testing strategy built-in.
   
   - icon: 🔔
     title: Real-time Notifications
@@ -51,6 +51,10 @@ features:
   - icon: 🔐
     title: Two-Factor Authentication
     details: TOTP-based 2FA with QR code setup, backup codes, and easy enable/disable. Security best practices built-in.
+  
+  - icon: 🔑
+    title: Google OAuth
+    details: One-click Google sign-in and sign-up. Account linking for existing users. Configured out of the box.
   
   - icon: 🧰
     title: Shared Utilities
@@ -199,20 +203,65 @@ Traditional fullstack development means configuring 10+ tools. With Velist, ever
 | Dev server | Configure Vite/Webpack | ✅ Built-in |
 | Database ORM | Setup Prisma/Drizzle | ✅ Built-in |
 | Authentication | Integrate Auth.js | ✅ Built-in |
+| Google OAuth | Setup Google Console + Code | ✅ Built-in |
 | 2FA / MFA | Build custom / Pay for service | ✅ Built-in TOTP |
 | Real-time notifications | Setup WebSocket + Queue | ✅ WebSocket included |
 | Toast notifications | Install library | ✅ Built-in |
 | API layer | Build REST/GraphQL | ✅ Inertia.js included |
-| Testing | Setup Jest/Playwright | ✅ Pre-configured |
-| Deployment | Write Docker/CI files | ✅ One-click deploy |
+| Testing | Setup Jest/Playwright | ✅ Bun test + Playwright |
+| Deployment | Write Docker/CI files | ✅ Docker + CI/CD included |
 
 ### 🤖 Built for the AI Era
 Velist is the first framework designed specifically for AI agents:
 
-- **Structured prompts** for each agent role (Product, Tech Lead, Developer, QA)
+- **Structured prompts** for each agent role (Product, Tech Lead, Developer, QA, DevOps)
 - **Mandatory review points** - agents can't skip human approval
 - **Feature isolation** - each feature is self-contained, perfect for parallel agent work
 - **Clear contracts** - types define boundaries between agents
+
+### 🧪 Testing Strategy (QA Agent Workflow)
+
+Two-level testing approach as defined in QA Agent workflow:
+
+| Type | Tool | Use For |
+|------|------|---------|
+| **Unit Tests** | `bun:test` | Business logic, API routes, validation |
+| **E2E Tests** | Playwright | Critical user flows, integration |
+
+```bash
+# Unit tests (fast, isolated)
+bun run test
+bun run test:watch
+
+# E2E tests (critical flows only)
+bun run test:e2e
+```
+
+**Test Priority:**
+1. Service layer (business logic, edge cases)
+2. API routes (happy path, auth checks, validation errors)
+3. Repository (if complex queries)
+
+### 🚀 Deployment (DevOps Agent Workflow)
+
+Production-ready deployment workflow:
+
+```
+✅ BUILD → ✅ DEPLOY → ✅ VERIFY → ✅ MONITOR
+```
+
+**Built-in deliverables:**
+- `Dockerfile` - Container setup
+- `DEPLOYMENT_GUIDE.md` - Step-by-step deployment
+- `INFRASTRUCTURE.md` - Architecture documentation
+- `RELEASE_NOTES.md` - Change tracking
+
+**Deployment checklist:**
+- [ ] Build successful
+- [ ] Database migrated
+- [ ] Health check pass
+- [ ] Monitoring active
+- [ ] Backup configured
 
 ### ⚡ Developer Experience That Actually Delivers
 
@@ -233,6 +282,8 @@ Velist includes enterprise-grade features that usually require hours of setup:
 
 | Feature | Implementation |
 |---------|---------------|
+| **Authentication** | JWT-based with session management |
+| **Google OAuth** | One-click sign-in, account linking |
 | **Two-Factor Authentication** | TOTP with QR code setup, backup codes |
 | **Real-time Notifications** | WebSocket-based with persistent storage |
 | **Toast Notifications** | Simple API: `toast.success('Done!')` |
