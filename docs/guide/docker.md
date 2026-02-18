@@ -2,6 +2,10 @@
 
 Deploy Velist with Docker. Includes multi-stage build, WAL mode support, and auto-backup.
 
+::: warning Deployment Time
+Docker deployment memiliki **downtime lebih lama** (30-70 detik) dibanding PM2 native (3-5 detik) karena proses build image. Untuk production yang memerlukan deploy cepat, pertimbangkan [PM2 Native Deployment](./production.md).
+:::
+
 ---
 
 ## Quick Start
@@ -54,10 +58,10 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/src ./src
-COPY --from=builder /app/db ./db
+# Note: db/ folder is mounted as volume, don't copy from builder!
 
-# Create directories
-RUN mkdir -p db storage/backups
+# Create directories (will be overwritten by volume mount at runtime)
+RUN mkdir -p /app/db /app/storage/backups
 
 # Set environment
 ENV NODE_ENV=production
@@ -352,6 +356,113 @@ Tapi kalau pakai **Cloudflare Proxy**, tidak perlu Nginx!
 - [ ] Health check pass: `curl http://localhost:3000/health`
 - [ ] Backup folder exists: `ls storage/backups/`
 - [ ] (Optional) S3 configured untuk offsite backup
+
+---
+
+## Update Deployment
+
+::: danger Long Downtime Warning
+Update dengan Docker memerlukan **build ulang** yang menyebabkan downtime 30-70 detik.
+:::
+
+### Standard Update (with downtime)
+
+```bash
+# 1. Backup dulu
+cp -r db db-backup-$(date +%Y%m%d)
+
+# 2. Pull latest code
+git pull
+
+# 3. Stop, rebuild, start (downtime ~30-70 detik)
+docker-compose down
+docker-compose up -d --build
+
+# 4. Migration (kalau ada)
+docker-compose exec app bun run db:migrate
+
+# 5. Check status
+docker-compose ps
+```
+
+**Build time breakdown:**
+```
+docker-compose up --build
+├── Download base image:      2-5 detik
+├── Install dependencies:    20-30 detik ← PALING LAMA
+├── Build frontend:          10-20 detik
+└── Start container:          3-5 detik
+TOTAL: ~35-60 detik downtime
+```
+
+### Faster Update dengan Pre-built Image
+
+Push image ke registry (Docker Hub, GHCR, etc), lalu pull di VPS:
+
+```bash
+# Di CI/CD atau local development
+docker build -t yourname/velist-app:v2.0 .
+docker push yourname/velist-app:v2.0
+
+# Di VPS (hanya pull, tidak perlu build)
+docker-compose down
+docker pull yourname/velist-app:v2.0  # 5-10 detik
+docker-compose up -d                  # 3 detik
+# Total downtime: ~10-15 detik
+```
+
+**docker-compose.yml untuk pre-built:**
+```yaml
+services:
+  app:
+    image: yourname/velist-app:v2.0  # ← Pre-built image
+    # build: .  # ← Comment out
+    ports:
+      - "3000:3000"
+    # ... rest of config
+```
+
+---
+
+## Docker vs PM2 Comparison
+
+| Aspek | Docker | PM2 Native |
+|-------|--------|------------|
+| **Setup complexity** | Medium | Simple |
+| **Deployment time** | ⚠️ 30-70 detik | ✅ 3-5 detik |
+| **Downtime** | ⚠️ Long (build) | ✅ Short (restart) |
+| **Isolation** | ✅ Containerized | ❌ Process only |
+| **Portability** | ✅ Run anywhere | ⚠️ Need Bun installed |
+| **Multi-service** | ✅ Easy with Compose | ❌ Manual setup |
+| **SQLite support** | ✅ Volume mount | ✅ Native file |
+
+### When to Use Docker
+
+✅ **Cocok untuk:**
+- Development environment consistency
+- Multi-service apps (app + redis + etc)
+- Kubernetes deployment
+- CI/CD pipeline dengan registry
+- Teams yang familiar Docker
+
+### When to Use PM2 Native
+
+✅ **Cocok untuk:**
+- Production deployment cepat
+- Single VPS sederhana
+- SQLite-only apps
+- Low traffic websites
+- Quick iteration/development
+
+### Recommendation by Scenario
+
+| Scenario | Recommended | Why |
+|----------|-------------|-----|
+| Startup/Side project | **PM2** | Deploy cepat, simple |
+| Production app | **PM2** atau **Docker + Registry** | Minimal downtime |
+| Multi-service | **Docker** | Compose orchestration |
+| Kubernetes | **Docker** | Container standard |
+| Team dev | **Docker** | Consistent environment |
 
 ---
 
