@@ -43,6 +43,18 @@ features:
   - icon: 🧪
     title: Testing Included
     details: E2E testing with Playwright setup out of the box. Unit tests with Bun. Coverage reports. No config needed.
+  
+  - icon: 🔔
+    title: Real-time Notifications
+    details: WebSocket-based notifications with persistent storage. Toast notifications built-in. Send notifications from any feature with one line.
+  
+  - icon: 🔐
+    title: Two-Factor Authentication
+    details: TOTP-based 2FA with QR code setup, backup codes, and easy enable/disable. Security best practices built-in.
+  
+  - icon: 🧰
+    title: Shared Utilities
+    details: CSV export, debounce functions, image processing, UUID v7, toast notifications - all included in $shared/lib.
 ---
 
 <!-- Stats Section -->
@@ -187,6 +199,9 @@ Traditional fullstack development means configuring 10+ tools. With Velist, ever
 | Dev server | Configure Vite/Webpack | ✅ Built-in |
 | Database ORM | Setup Prisma/Drizzle | ✅ Built-in |
 | Authentication | Integrate Auth.js | ✅ Built-in |
+| 2FA / MFA | Build custom / Pay for service | ✅ Built-in TOTP |
+| Real-time notifications | Setup WebSocket + Queue | ✅ WebSocket included |
+| Toast notifications | Install library | ✅ Built-in |
 | API layer | Build REST/GraphQL | ✅ Inertia.js included |
 | Testing | Setup Jest/Playwright | ✅ Pre-configured |
 | Deployment | Write Docker/CI files | ✅ One-click deploy |
@@ -208,6 +223,21 @@ Velist is the first framework designed specifically for AI agents:
 - **Type safety** from database to UI props
 - **Database migrations** auto-generated from schema changes
 - **Dark mode** included in the starter template
+- **Shared utilities** ($shared/lib) - CSV, debounce, toast, UUID, image processing
+- **Modern input styling** - Clean focus states, consistent dark mode support
+- **Active path navigation** - Menu highlighting out of the box
+
+### 🔐 Security & Real-time Features
+
+Velist includes enterprise-grade features that usually require hours of setup:
+
+| Feature | Implementation |
+|---------|---------------|
+| **Two-Factor Authentication** | TOTP with QR code setup, backup codes |
+| **Real-time Notifications** | WebSocket-based with persistent storage |
+| **Toast Notifications** | Simple API: `toast.success('Done!')` |
+| **Shared Utilities** | CSV export, debounce, image processing, UUID v7 |
+| **Modern UI Components** | Active navigation, clean inputs, dark mode |
 
 </div>
 
