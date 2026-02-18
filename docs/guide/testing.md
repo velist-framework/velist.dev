@@ -1,30 +1,30 @@
 # Testing
 
-Testing strategy di Velist menggunakan two-level approach: **Unit Tests** untuk business logic dan **E2E Tests** untuk critical flows.
+Velist uses a two-level testing approach: **Unit Tests** for business logic and **E2E Tests** for critical flows.
 
 ---
 
 ## AI-Powered Testing (Recommended)
 
-Gunakan QA Agent untuk automated testing:
+Use the QA Agent for automated testing:
 
 ```
 @workflow/agents/qa.md
 
-Verify fitur sudah sesuai requirement.
+Verify the feature meets requirements.
 ```
 
-QA Agent akan:
-1. **Code review** — Review kualitas kode
-2. **Functional testing** — Test fitur utama
-3. **Edge case testing** — Test skenario batas
-4. **Generate test report** — Buat laporan testing
-5. **Present ke client** — Tunggu approval sebelum deploy
+The QA Agent will:
+1. **Code review** — Review code quality
+2. **Functional testing** — Test main features
+3. **Edge case testing** — Test boundary scenarios
+4. **Generate test report** — Create testing report
+5. **Present to client** — Wait for approval before deploy
 
-### Output QA Agent
+### QA Agent Output
 
 ```
-✅ TESTING SELESAI
+✅ TESTING COMPLETE
 
 📊 TEST REPORT
 
@@ -35,7 +35,7 @@ Status: [APPROVED / CHANGES_REQUESTED]
 ✅/❌ Performance Tests
 
 📝 Findings:
-[Detail issues jika ada]
+[Detail issues if any]
 
 🔍 FINAL REVIEW BEFORE DEPLOY
 ```
@@ -51,15 +51,15 @@ Status: [APPROVED / CHANGES_REQUESTED]
 
 ### Test Priority
 
-1. **Unit test** untuk business logic (service.ts)
-2. **Unit test** untuk API routes (api.ts)
-3. **E2E test** untuk critical user flows saja
+1. **Unit test** for business logic (service.ts)
+2. **Unit test** for API routes (api.ts)
+3. **E2E test** for critical user flows only
 
 ---
 
 ## Unit Tests (bun:test)
 
-**Default choice** untuk semua fitur. Test business logic dan API secara isolated.
+**Default choice** for all features. Test business logic and API in isolation.
 
 ### Test Structure
 
@@ -133,23 +133,23 @@ bun test tests/unit/invoices
 bun test tests/unit/invoices/api.test.ts
 ```
 
-**Note:** E2E tests excluded dari `bun test` karena Playwright pakai sintaks berbeda (`test.describe`).
+**Note:** E2E tests are excluded from `bun test` because Playwright uses different syntax (`test.describe`).
 
 ---
 
 ## E2E Tests (Playwright)
 
-**Hanya untuk critical flows** yang melibatkan:
+**Only for critical flows** that involve:
 - Multi-step user journeys (register → login → dashboard)
 - Browser-specific behavior (cookies, redirects)
 - UI interactions (drag-drop, file upload, modals)
 - Cross-page integration
 
-### Jangan Buat E2E Test Untuk
+### Don't Create E2E Tests For
 
-- Simple CRUD (sudah covered by unit tests)
-- Form validation (unit test lebih cepat)
-- API response structure (unit test lebih reliable)
+- Simple CRUD (already covered by unit tests)
+- Form validation (unit tests are faster)
+- API response structure (unit tests are more reliable)
 
 ### E2E Example
 
@@ -235,17 +235,17 @@ E2E tests automatically:
 
 ### Unit Tests
 
-- **Test business logic** di service layer
-- **Test API routes** untuk happy path dan error cases
-- **Mock database** untuk test isolation
-- **Fast feedback** - unit test harus cepat (< 100ms)
+- **Test business logic** in the service layer
+- **Test API routes** for happy path and error cases
+- **Mock database** for test isolation
+- **Fast feedback** - unit tests should be fast (< 100ms)
 
 ### E2E Tests
 
-- **Focus on user journeys**, bukan individual features
-- **Minimize test count** - hanya critical flows
-- **Use data-testid** untuk selector yang stabil
-- **Idempotent** - test bisa di-run berulang kali
+- **Focus on user journeys**, not individual features
+- **Minimize test count** - only critical flows
+- **Use data-testid** for stable selectors
+- **Idempotent** - tests can be run repeatedly
 
 ### File Organization
 
@@ -271,4 +271,4 @@ Developer Agent → [Client Approve] → QA Agent → [Client Approve] → DevOp
                     Implementation          Testing               Deploy
 ```
 
-Setiap tahap ada **mandatory review point**. Tidak ada auto-skip.
+Each stage has a **mandatory review point**. No auto-skip.

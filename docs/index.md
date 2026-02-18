@@ -38,7 +38,7 @@ features:
   
   - icon: 🚀
     title: Deploy to VPS
-    details: Native VPS deployment with PM2. SSH-based deployment included. Docker support optional. Works with any VPS provider.
+    details: Native VPS deployment with PM2 (fastest, 3-5s deploy). Docker support optional (30-70s build time). Works with any VPS provider.
   
   - icon: 🧪
     title: Testing with Bun & Playwright
@@ -218,7 +218,7 @@ Traditional fullstack development means configuring 10+ tools. With Velist, ever
 | File Storage | Setup S3 SDK / SDK | ✅ Local + S3 abstraction built-in |
 | API layer | Build REST API manually | ✅ Inertia.js (backend-rendered SPA) |
 | Testing | Setup external test runner | ✅ bun:test + Playwright |
-| Deployment | Configure Docker + CI/CD | ✅ Native VPS deployment + Docker optional |
+| Deployment | Configure Docker + CI/CD | ✅ Native VPS (PM2, 3-5s) + Docker (30-70s) |
 
 ### 🤖 Built for the AI Era
 Velist is the first framework designed specifically for AI agents:
@@ -262,20 +262,20 @@ Production-ready VPS deployment workflow:
 **Native VPS deployment** (default):
 - SSH-based deployment
 - PM2 process manager
-- SQLite database (embedded, no separate DB server)
-- Nginx reverse proxy
-
-**Built-in deliverables:**
-- `DEPLOYMENT_GUIDE.md` - Step-by-step VPS deployment
-- `docker-compose.yml` - Optional Docker setup
-- `INFRASTRUCTURE.md` - Architecture documentation
-- `RELEASE_NOTES.md` - Change tracking
+- SQLite database (embedded, no separate DB server) 
  
-**Docker optional** - For teams that prefer containers:
+**Docker optional** - For teams that prefer containers (note: 30-70s build time vs 3-5s with PM2):
 ```bash
 # Docker deployment (alternative)
 docker-compose up -d
 ```
+
+**Deployment Comparison:**
+
+| Method | Downtime | Pros | Cons |
+|--------|----------|------|------|
+| **PM2 (Native)** | 3-5s | Fastest deploy, easier debugging | Requires Bun on host |
+| **Docker** | 30-70s | Isolated, portable, reproducible | Build time, more complex |
 
 ### ⚡ Developer Experience That Actually Delivers
  

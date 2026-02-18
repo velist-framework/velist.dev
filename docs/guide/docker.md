@@ -10,12 +10,17 @@ Docker deployment memiliki **downtime lebih lama** (30-70 detik) dibanding PM2 n
 
 ## Quick Start
 
+::: info Files Already Included
+`Dockerfile` dan `docker-compose.yml` sudah tersedia di root project. Tidak perlu membuat manual.
+:::
+
 ```bash
 # Clone project
 git clone https://github.com/yourusername/your-velist-app.git
 cd your-velist-app
 
-# Create Dockerfile dan docker-compose.yml (copy dari bawah)
+# Edit environment variables
+nano .env
 
 # Build and run
 docker-compose up -d --build
@@ -26,103 +31,7 @@ docker-compose logs -f
 
 ---
 
-## Dockerfile
-
-Create `Dockerfile`:
-
-```dockerfile
-# Stage 1: Build
-FROM oven/bun:latest AS builder
-
-WORKDIR /app
-
-# Copy package files
-COPY package.json bun.lock ./
-
-# Install dependencies
-RUN bun install --frozen-lockfile
-
-# Copy source
-COPY . .
-
-# Build frontend
-RUN bun run build
-
-# Stage 2: Production
-FROM oven/bun:latest AS production
-
-WORKDIR /app
-
-# Copy built assets and dependencies
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package.json ./
-COPY --from=builder /app/src ./src
-# Note: db/ folder is mounted as volume, don't copy from builder!
-
-# Create directories (will be overwritten by volume mount at runtime)
-RUN mkdir -p /app/db /app/storage/backups
-
-# Set environment
-ENV NODE_ENV=production
-ENV PORT=3000
-
-# Expose port
-EXPOSE 3000
-
-# Health check (using Bun built-in fetch)
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD bun -e "fetch('http://localhost:3000/health').then(r => r.ok ? process.exit(0) : process.exit(1))"
-
-# Start
-CMD ["bun", "src/bootstrap.ts"]
-```
-
-### Build Image
-
-```bash
-docker build -t velist-app .
-```
-
----
-
-## Docker Compose
-
-Create `docker-compose.yml`:
-
-```yaml
-version: '3.8'
-
-services:
-  app:
-    build: .
-    ports:
-      - "3000:3000"
-    environment:
-      - NODE_ENV=production
-      - PORT=3000
-      - JWT_SECRET=${JWT_SECRET}
-      - DATABASE_URL=./db/prod.sqlite
-      # Backup config
-      - BACKUP_ENABLED=true
-      - BACKUP_INTERVAL_MINUTES=60
-      - BACKUP_RETENTION_COUNT=24
-      - BACKUP_LOCAL_PATH=./storage/backups
-      - BACKUP_S3_ENABLED=${BACKUP_S3_ENABLED:-false}
-      # Storage config (optional)
-      - STORAGE_DRIVER=${STORAGE_DRIVER:-local}
-    volumes:
-      # Database (WAL mode: 3 files)
-      - ./db:/app/db
-      # Storage (uploads, backups)
-      - ./storage:/app/storage
-    restart: unless-stopped
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-```
+## Configuration
 
 ### Environment File
 
@@ -240,23 +149,15 @@ git clone https://github.com/yourusername/your-velist-app.git
 cd your-velist-app
 ```
 
-### 2. Create Files
+### 2. Configure Environment
 
 ```bash
-# Create Dockerfile
-cat > Dockerfile << 'EOF'
-[paste Dockerfile from above]
-EOF
-
-# Create docker-compose.yml
-cat > docker-compose.yml << 'EOF'
-[paste docker-compose.yml from above]
-EOF
-
-# Create .env
-cat > .env << 'EOF'
+# Create .env file
 JWT_SECRET=$(openssl rand -base64 32)
-EOF
+echo "JWT_SECRET=$JWT_SECRET" > .env
+
+# Edit other settings as needed
+nano .env
 ```
 
 ### 3. Start
@@ -347,8 +248,6 @@ Tapi kalau pakai **Cloudflare Proxy**, tidak perlu Nginx!
 
 ## Deployment Checklist
 
-- [ ] Dockerfile created
-- [ ] docker-compose.yml created
 - [ ] `.env` file dengan JWT_SECRET
 - [ ] Database volume: `./db:/app/db`
 - [ ] Storage volume: `./storage:/app/storage`

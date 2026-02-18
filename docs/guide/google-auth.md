@@ -1,89 +1,89 @@
 # Google OAuth Setup Guide
 
-Panduan lengkap untuk mengaktifkan login dengan Google (Google Sign-In) di aplikasi Velist.
+Complete guide to enable Google Sign-In login in your Velist application.
 
 ---
 
 ## Overview
 
-Velist mendukung autentikasi menggunakan Google OAuth 2.0. Dengan fitur ini, pengguna dapat login atau register menggunakan akun Google mereka tanpa perlu membuat password.
+Velist supports authentication using Google OAuth 2.0. With this feature, users can log in or register using their Google account without needing to create a password.
 
 ## Prerequisites
 
-- Akun Google (Gmail/Google Workspace)
-- Akses ke [Google Cloud Console](https://console.cloud.google.com/)
+- Google Account (Gmail/Google Workspace)
+- Access to [Google Cloud Console](https://console.cloud.google.com/)
 
 ---
 
 ## Step-by-Step Setup
 
-### 1. Buat Project di Google Cloud Console
+### 1. Create Project in Google Cloud Console
 
-1. Buka [Google Cloud Console](https://console.cloud.google.com/)
-2. Klik dropdown project di top navigation bar → **New Project**
-3. Masukkan:
-   - **Project name**: `Velist App` (atau nama aplikasi Anda)
-   - **Location**: Optional (bisa dikosongkan)
-4. Klik **Create**
-5. Tunggu beberapa saat sampai project selesai dibuat, kemudian pilih project tersebut dari dropdown
+1. Open [Google Cloud Console](https://console.cloud.google.com/)
+2. Click the project dropdown in the top navigation bar → **New Project**
+3. Enter:
+   - **Project name**: `Velist App` (or your app name)
+   - **Location**: Optional (can be left empty)
+4. Click **Create**
+5. Wait a moment for the project to be created, then select it from the dropdown
 
 ---
 
 ### 2. Enable Google+ API
 
-1. Di sidebar kiri, klik **APIs & Services** → **Library**
-2. Cari **Google+ API** (atau "Google People API")
-3. Klik hasil pencarian, kemudian klik **Enable**
-4. Tunggu sampai API enabled (biasanya sekitar 1-2 menit)
+1. In the left sidebar, click **APIs & Services** → **Library**
+2. Search for **Google+ API** (or "Google People API")
+3. Click the search result, then click **Enable**
+4. Wait until the API is enabled (usually about 1-2 minutes)
 
-> **Note**: Google+ API deprecated, gunakan **Google People API** untuk mendapatkan profile info.
+> **Note**: Google+ API is deprecated, use **Google People API** to get profile info.
 
 ---
 
-### 3. Konfigurasi OAuth Consent Screen
+### 3. Configure OAuth Consent Screen
 
-1. Di sidebar kiri, klik **APIs & Services** → **OAuth consent screen**
-2. Pilih **External** (untuk aplikasi yang bisa diakses siapa saja) atau **Internal** (hanya untuk Google Workspace organization)
-3. Klik **Create**
-4. Isi informasi berikut:
+1. In the left sidebar, click **APIs & Services** → **OAuth consent screen**
+2. Select **External** (for apps accessible by anyone) or **Internal** (only for Google Workspace organization)
+3. Click **Create**
+4. Fill in the following information:
 
 #### App Information
 | Field | Value |
 |-------|-------|
-| **App name** | Velist App (atau nama aplikasi Anda) |
-| **User support email** | Email support Anda |
-| **App logo** | Optional - bisa upload logo aplikasi |
+| **App name** | Velist App (or your app name) |
+| **User support email** | Your support email |
+| **App logo** | Optional - you can upload your app logo |
 
 #### App Domain
 | Field | Value |
 |-------|-------|
-| **Application home page** | `http://localhost:3000` (dev) atau domain production |
-| **Application privacy policy link** | URL ke privacy policy |
-| **Application terms of service link** | URL ke terms of service |
+| **Application home page** | `http://localhost:3000` (dev) or production domain |
+| **Application privacy policy link** | URL to privacy policy |
+| **Application terms of service link** | URL to terms of service |
 
 #### Authorized Domains
-Tambahkan domain Anda:
-- `localhost` (untuk development)
-- `yourdomain.com` (untuk production)
+Add your domains:
+- `localhost` (for development)
+- `yourdomain.com` (for production)
 
-5. Klik **Save and Continue**
-6. Di halaman **Scopes**, klik **Add or Remove Scopes**
-7. Cari dan pilih scopes berikut:
+5. Click **Save and Continue**
+6. On the **Scopes** page, click **Add or Remove Scopes**
+7. Search and select the following scopes:
    - `openid`
    - `email`
    - `profile`
-8. Klik **Update**, kemudian **Save and Continue**
-9. Di halaman **Test Users**, tambahkan email Anda untuk testing (khusus External app yang belum verified)
-10. Klik **Save and Continue** → **Back to Dashboard**
+8. Click **Update**, then **Save and Continue**
+9. On the **Test Users** page, add your email for testing (for External apps that aren't verified yet)
+10. Click **Save and Continue** → **Back to Dashboard**
 
 ---
 
-### 4. Buat OAuth 2.0 Credentials
+### 4. Create OAuth 2.0 Credentials
 
-1. Di sidebar kiri, klik **APIs & Services** → **Credentials**
-2. Klik **Create Credentials** → **OAuth client ID**
-3. Pilih **Application type**: `Web application`
-4. Isi informasi:
+1. In the left sidebar, click **APIs & Services** → **Credentials**
+2. Click **Create Credentials** → **OAuth client ID**
+3. Select **Application type**: `Web application`
+4. Fill in the information:
 
 | Field | Value |
 |-------|-------|
@@ -91,33 +91,33 @@ Tambahkan domain Anda:
 | **Authorized JavaScript origins** | `http://localhost:3000` |
 | **Authorized redirect URIs** | `http://localhost:3000/auth/google/callback` |
 
-5. Untuk production, tambahkan juga:
+5. For production, also add:
    - **Authorized JavaScript origins**: `https://yourdomain.com`
    - **Authorized redirect URIs**: `https://yourdomain.com/auth/google/callback`
 
-6. Klik **Create**
-7. **Segera copy** Client ID dan Client Secret yang muncul!
-   - Klik **Download JSON** untuk menyimpan credentials (opsional tapi direkomendasikan)
+6. Click **Create**
+7. **Immediately copy** the Client ID and Client Secret that appear!
+   - Click **Download JSON** to save credentials (optional but recommended)
 
-> ⚠️ **PENTING**: Client Secret hanya ditampilkan sekali. Jika hilang, Anda harus create new credentials.
+> ⚠️ **IMPORTANT**: Client Secret is only displayed once. If lost, you must create new credentials.
 
 ---
 
-### 5. Konfigurasi di Aplikasi Velist
+### 5. Configure in Velist Application
 
-1. Buka file `.env` di root project
-2. Tambahkan atau update variabel berikut:
+1. Open the `.env` file in your project root
+2. Add or update the following variables:
 
 ```env
 # Google OAuth Credentials
 GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=your-client-secret
 
-# Optional: Custom redirect URI untuk production
+# Optional: Custom redirect URI for production
 # GOOGLE_REDIRECT_URI=https://yourdomain.com/auth/google/callback
 ```
 
-3. Restart aplikasi:
+3. Restart the application:
 
 ```bash
 bun run dev
@@ -127,11 +127,11 @@ bun run dev
 
 ## Testing
 
-1. Buka aplikasi di browser: `http://localhost:3000`
-2. Klik menu **Login** atau **Register**
-3. Klik tombol **"Sign in with Google"**
-4. Pilih akun Google Anda
-5. Jika berhasil, Anda akan di-redirect ke dashboard
+1. Open the application in browser: `http://localhost:3000`
+2. Click the **Login** or **Register** menu
+3. Click the **"Sign in with Google"** button
+4. Select your Google account
+5. If successful, you'll be redirected to the dashboard
 
 ---
 
@@ -139,67 +139,67 @@ bun run dev
 
 ### Error: "redirect_uri_mismatch"
 
-**Penyebab**: Redirect URI di Google Console tidak cocok dengan yang dikirim aplikasi.
+**Cause**: Redirect URI in Google Console doesn't match what the app is sending.
 
-**Solusi**:
-- Pastikan `http://localhost:3000/auth/google/callback` sudah ditambahkan di Authorized redirect URIs
-- Periksa tidak ada trailing slash atau typo
-- Untuk production, pastikan protocol adalah `https://`
+**Solution**:
+- Make sure `http://localhost:3000/auth/google/callback` is added to Authorized redirect URIs
+- Check for trailing slash or typos
+- For production, make sure the protocol is `https://`
 
 ### Error: "unauthorized_client"
 
-**Penyebab**: OAuth consent screen belum dikonfigurasi atau app masih dalam status "Testing".
+**Cause**: OAuth consent screen is not configured or the app is still in "Testing" status.
 
-**Solusi**:
-- Pastikan sudah mengisi OAuth consent screen (Step 3)
-- Tambahkan email Anda sebagai Test User jika app status-nya "Testing"
+**Solution**:
+- Make sure you've filled out the OAuth consent screen (Step 3)
+- Add your email as a Test User if the app status is "Testing"
 
 ### Error: "access_denied"
 
-**Penyebab**: User menolak permission atau scope tidak sesuai.
+**Cause**: User denied permission or scope doesn't match.
 
-**Solusi**:
-- Pastikan scopes `openid`, `email`, `profile` sudah ditambahkan
-- Coba hapus cookies dan coba lagi
+**Solution**:
+- Make sure scopes `openid`, `email`, `profile` are added
+- Try clearing cookies and try again
 
-### Error: "invalid_client" saat callback
+### Error: "invalid_client" on callback
 
-**Penyebab**: Client Secret salah atau environment variable belum ter-load.
+**Cause**: Client Secret is wrong or environment variable hasn't been loaded.
 
-**Solusi**:
-- Periksa `.env` file sudah benar
-- Pastikan tidak ada spasi di awal/akhir Client ID dan Secret
-- Restart server setelah mengubah `.env`
+**Solution**:
+- Check that `.env` file is correct
+- Make sure there are no spaces at the beginning/end of Client ID and Secret
+- Restart server after changing `.env`
 
 ---
 
 ## Production Checklist
 
-Sebelum deploy ke production, pastikan:
+Before deploying to production, make sure:
 
-- [ ] OAuth consent screen sudah **Published** (bukan Testing)
-- [ ] App sudah **verified** oleh Google (untuk sensitive scopes)
-- [ ] Redirect URI production sudah ditambahkan
-- [ ] `GOOGLE_REDIRECT_URI` di `.env` production sudah sesuai
-- [ ] Privacy Policy dan Terms of Service sudah tersedia online
-- [ ] App name dan logo sudah final (tidak bisa gampang diubah setelah verified)
+- [ ] OAuth consent screen is **Published** (not Testing)
+- [ ] App is **verified** by Google (for sensitive scopes)
+- [ ] Production redirect URI is added
+- [ ] `GOOGLE_REDIRECT_URI` in `.env` production is correct
+- [ ] Privacy Policy and Terms of Service are available online
+- [ ] App name and logo are final (cannot be easily changed after verified)
 
 ### Publishing OAuth Consent Screen
 
-1. Di Google Cloud Console, buka **APIs & Services** → **OAuth consent screen**
-2. Klik **PUBLISH APP**
-3. Konfirmasi dengan klik **Confirm**
-4. Tunggu review dari Google (bisa memakan waktu beberapa hari untuk sensitive scopes)
+1. In Google Cloud Console, open **APIs & Services** → **OAuth consent screen**
+2. Click **PUBLISH APP**
+3. Confirm by clicking **Confirm**
+4. Wait for review from Google (can take several days for sensitive scopes)
 
 ---
 
 ## Security Best Practices
 
-1. **Jangan commit `.env` file** ke repository
-2. **Rotate Client Secret** secara berkala (3-6 bulan)
-3. **Gunakan HTTPS** untuk production
-4. **Validasi state parameter** untuk mencegah CSRF attack (sudah dihandle oleh Velist)
-5. **Limit scope** - hanya minta permission yang benar-benar diperlukan
+1. **Don't commit `.env` file** to repository
+2. **Rotate Client Secret** periodically (3-6 months)
+3. **Use HTTPS** for production
+4. **Validate state parameter** to prevent CSRF attack (handled by Velist)
+5. **Limit scope** - only request permissions that are actually needed
 
 ---
 
@@ -207,4 +207,4 @@ Sebelum deploy ke production, pastikan:
 
 - [Google Identity Platform - OAuth 2.0](https://developers.google.com/identity/protocols/oauth2)
 - [Google Cloud Console](https://console.cloud.google.com/)
-- [Arctic Documentation](https://arcticjs.dev/) - OAuth library yang digunakan Velist
+- [Arctic Documentation](https://arcticjs.dev/) - OAuth library used by Velist
