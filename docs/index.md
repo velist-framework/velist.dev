@@ -59,6 +59,10 @@ features:
   - icon: 🧰
     title: Shared Utilities
     details: CSV export, debounce functions, image processing, UUID v7, toast notifications - all included in $shared/lib.
+  
+  - icon: 📦
+    title: File Storage
+    details: Upload files to local filesystem or S3-compatible storage (Wasabi, MinIO). Presigned URLs support. Unified API.
 ---
 
 <!-- Stats Section -->
@@ -207,6 +211,7 @@ Traditional fullstack development means configuring 10+ tools. With Velist, ever
 | 2FA / MFA | Build custom / Pay for service | ✅ Built-in TOTP |
 | Real-time notifications | Setup WebSocket + Queue | ✅ WebSocket included |
 | Toast notifications | Install library | ✅ Built-in |
+| File Storage | Setup S3 SDK / SDK | ✅ Local + S3 abstraction built-in |
 | API layer | Build REST API manually | ✅ Inertia.js (backend-rendered SPA) |
 | Testing | Setup external test runner | ✅ bun:test + Playwright |
 | Deployment | Configure Docker + CI/CD | ✅ Native VPS deployment + Docker optional |
@@ -261,17 +266,7 @@ Production-ready VPS deployment workflow:
 - `docker-compose.yml` - Optional Docker setup
 - `INFRASTRUCTURE.md` - Architecture documentation
 - `RELEASE_NOTES.md` - Change tracking
-
-**Deployment checklist:**
-- [ ] Build successful (`bun run build`)
-- [ ] Database migrated (`bun run db:migrate`)
-- [ ] Environment variables configured
-- [ ] PM2 process started
-- [ ] Nginx configured
-- [ ] SSL certificate (Let's Encrypt)
-- [ ] Health check pass
-- [ ] Monitoring active
-
+ 
 **Docker optional** - For teams that prefer containers:
 ```bash
 # Docker deployment (alternative)
@@ -279,9 +274,7 @@ docker-compose up -d
 ```
 
 ### ⚡ Developer Experience That Actually Delivers
-
-> "I built a complete SaaS in a weekend. The vertical slicing approach changed how I think about architecture."
-> — *Early Adopter*
+ 
 
 - **Hot reload** that actually works - server and client
 - **Type safety** from database to UI props with TypeScript
@@ -308,6 +301,7 @@ We don't hide our dependencies. Here's what Velist actually uses:
 | **Icons** | Lucide Svelte |
 | **Testing** | bun:test + Playwright |
 | **Image Processing** | Sharp |
+| **File Storage** | AWS SDK S3 (local + S3-compatible) |
 
 ### 🔐 Security & Real-time Features
 
@@ -320,6 +314,7 @@ Velist includes enterprise-grade features that usually require hours of setup:
 | **Two-Factor Authentication** | TOTP with QR code setup, backup codes |
 | **Real-time Notifications** | WebSocket-based with persistent storage |
 | **Toast Notifications** | Simple API: `toast.success('Done!')` |
+| **File Storage** | Local filesystem or S3-compatible (Wasabi, MinIO) |
 | **Shared Utilities** | CSV export, debounce, image processing, UUID v7 |
 | **Modern UI Components** | Active navigation, clean inputs, dark mode |
 
