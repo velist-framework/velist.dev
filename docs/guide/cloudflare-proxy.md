@@ -7,18 +7,24 @@ Deploy Velist ke VPS dengan Cloudflare Proxy tanpa perlu Nginx. Cloudflare handl
 ```
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
 │    User     │────►│  Cloudflare │────►│  Velist App │
-│  (HTTPS)    │     │   Proxy     │     │  (Port 3000)│
+│  (HTTPS)    │     │   Proxy     │     │  (HTTP:3000)│
 └─────────────┘     └──────┬──────┘     └─────────────┘
                            │
                     ┌──────┴──────┐
-                    │  SSL/TLS    │
-                    │  Termination│
+                    │  SSL/TLS    │  ← Handled by Cloudflare
+                    │  Termination│     (No cert needed on VPS)
                     └─────────────┘
 ```
 
+**Flow:**
+1. User → Cloudflare: **HTTPS** (encrypted)
+2. Cloudflare → Velist: **HTTP** port 3000 (internal)
+3. Velist app tidak perlu SSL certificate
+
 **Benefits:**
 - ✅ No Nginx needed
-- ✅ Automatic SSL from Cloudflare
+- ✅ **No SSL certificate setup di VPS** (paling simple!)
+- ✅ Automatic HTTPS dari Cloudflare
 - ✅ DDoS protection
 - ✅ CDN caching (static assets)
 - ✅ Simpler setup
@@ -153,12 +159,19 @@ TTL: Auto
 ```
 SSL/TLS → Overview
 
-Encryption mode: Full (strict)
+Encryption mode: Flexible
 ```
 
-**Pilih "Full (strict)"** agar:
-- Cloudflare ↔ Origin (VPS) pakai HTTPS
-- Origin certificate validated
+**Pilih "Flexible"** agar:
+- User ↔ Cloudflare: HTTPS (encrypted) ✅
+- Cloudflare ↔ Origin (VPS): HTTP (port 3000)
+- **No certificate needed di VPS** - Paling simple!
+
+::: tip Kenapa Flexible?
+Karena Velist app jalan di port 3000 tanpa SSL certificate. Flexible mode handle HTTPS di edge (Cloudflare), lalu forward HTTP ke origin.
+
+Kalau mau Full (strict), perlu setup SSL certificate di VPS (more complex).
+:::
 
 ### 3.3 Origin Rules (Port Forwarding)
 
@@ -210,14 +223,12 @@ ufw allow 22/tcp
 for ip in $(curl -s https://www.cloudflare.com/ips-v4); do
   ufw allow from $ip to any port 3000
   ufw allow from $ip to any port 80
-  ufw allow from $ip to any port 443
 done
 
 # IPv6
 for ip in $(curl -s https://www.cloudflare.com/ips-v6); do
   ufw allow from $ip to any port 3000
   ufw allow from $ip to any port 80
-  ufw allow from $ip to any port 443
 done
 
 # Enable UFW
@@ -225,6 +236,17 @@ ufw enable
 ```
 
 **Keuntungan:** Port 3000 hanya bisa diakses dari Cloudflare, tidak dari internet langsung.
+
+::: warning Catatan Keamanan
+Dengan mode **Flexible**, traffic dari Cloudflare ke VPS (port 3000) adalah **HTTP (tidak terenkripsi)**.
+
+Ini aman karena:
+1. Cloudflare proxy menghandle HTTPS ke user
+2. Internal network (VPS) biasanya trusted
+3. Jika VPS di data center dengan network isolation, risk minimal
+
+Kalau butuh **end-to-end encryption**, gunakan mode Full dengan origin certificate (lebih complex setup).
+:::
 
 ## Step 5: Verify Deployment
 
@@ -319,8 +341,9 @@ Cloudflare tidak bisa connect ke origin:
 
 1. Check VPS running: `pm2 status`
 2. Check port 3000 listening: `netstat -tlnp | grep 3000`
-3. Check Origin Rules configured correctly
-4. Check firewall allow Cloudflare IPs
+3. **Check SSL/TLS mode** - Harus "Flexible", bukan "Full"
+4. Check Origin Rules configured correctly
+5. Check firewall allow Cloudflare IPs
 
 ### Error: 522 Connection Timed Out
 
@@ -329,10 +352,22 @@ Cloudflare tidak bisa connect ke origin:
 3. SSH ke VPS: `ssh root@your-vps-ip`
 4. Restart app: `pm2 restart all`
 
-### Error: Invalid SSL certificate
+### Error: Invalid SSL certificate / 525 SSL Handshake Failed
 
-1. Pastikan SSL/TLS mode: **Full (strict)**
-2. Jangan pakai "Flexible" (itu tidak encrypt ke origin)
+**Jangan pakai Full (strict)** kalau VPS tidak punya SSL certificate.
+
+**Solusi:**
+1. Ubah ke **Flexible** mode:
+   ```
+   SSL/TLS → Overview → Flexible
+   ```
+
+2. Atau setup origin certificate (advanced):
+   ```
+   SSL/TLS → Origin Server → Create Certificate
+   ```
+
+**Rekomendasi:** Pakai Flexible untuk simplicity.
 
 ### Static assets not loading (404)
 
