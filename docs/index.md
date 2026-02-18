@@ -79,33 +79,72 @@ bun create velist my-app
 cd my-app && bun dev
 ```
 
-```ts [Define Feature]
-// features/users/user.feature.ts
-export const userFeature = defineFeature({
-  name: 'users',
-  routes: {
-    index: { path: '/users', component: UserList },
-    create: { path: '/users/create', component: UserCreate },
-  },
-  database: {
-    schema: userSchema,
-    seed: userSeeds,
-  },
-  permissions: ['view_users', 'create_users'],
-});
+```ts [Define API]
+// features/users/api.ts
+export const usersApi = createProtectedApi('/users')
+  .get('/', async (ctx) => {
+    const users = await userService.getAll()
+    return ctx.inertia.render('users/Index', { users })
+  })
+  .post('/', async (ctx) => {
+    const user = await userService.create(ctx.body)
+    return ctx.inertia.redirect('/users')
+  })
 ```
 
 ```svelte [Build UI]
-<!-- features/users/pages/UserList.svelte -->
+<!-- features/users/pages/Index.svelte -->
 <script>
-  let { users } = $props();
+  import AppLayout from '$shared/layouts/AppLayout.svelte'
+  let { user, users } = $props();
 </script>
 
-<div class="grid gap-4">
-  {#each users as user}
-    <UserCard {user} />
-  {/each}
-</div>
+<AppLayout title="Users" {user} path="/users">
+  <div class="max-w-7xl mx-auto p-6">
+    <h1 class="text-2xl font-bold mb-4">Users</h1>
+    <div class="grid gap-4">
+      {#each users as u}
+        <div class="p-4 bg-white rounded-lg shadow">
+          {u.name}
+        </div>
+      {/each}
+    </div>
+  </div>
+</AppLayout>
+```
+
+:::
+// features/users/api.ts
+export const usersApi = createProtectedApi('/users')
+  .get('/', async (ctx) => {
+    const users = await userService.getAll()
+    return ctx.inertia.render('users/Index', { users })
+  })
+  .post('/', async (ctx) => {
+    const user = await userService.create(ctx.body)
+    return ctx.inertia.redirect('/users')
+  })
+```
+
+```svelte [Build UI]
+<!-- features/users/pages/Index.svelte -->
+<script>
+  import AppLayout from '$shared/layouts/AppLayout.svelte'
+  let { user, users } = $props();
+</script>
+
+<AppLayout title="Users" {user} path="/users">
+  <div class="max-w-7xl mx-auto p-6">
+    <h1 class="text-2xl font-bold mb-4">Users</h1>
+    <div class="grid gap-4">
+      {#each users as u}
+        <div class="p-4 bg-white rounded-lg shadow">
+          {u.name}
+        </div>
+      {/each}
+    </div>
+  </div>
+</AppLayout>
 ```
 
 :::
