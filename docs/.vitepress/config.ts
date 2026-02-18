@@ -70,6 +70,7 @@ export default withMermaid({
           text: 'Deployment',
           items: [
             { text: 'Production Build', link: '/guide/production' },
+            { text: 'Cloudflare Proxy', link: '/guide/cloudflare-proxy' },
             { text: 'Docker', link: '/guide/docker' }
           ]
         }
