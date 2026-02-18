@@ -87,22 +87,28 @@ BACKUP_S3_PATH=backups/database
 
 ## Backup Triggers
 
-### 1. Automatic Backup (Recommended)
+### 1. Automatic Backup (Default)
 
-Backups run automatically based on `BACKUP_INTERVAL_MINUTES`.
+Backups run automatically as a **silent background process**:
 
 **When it starts:**
-- Server startup (if `BACKUP_ENABLED=true`)
+- Immediately when server starts (if `BACKUP_ENABLED=true`)
 - Then every X minutes based on interval
 
 **Example with 10-minute interval:**
 ```
-10:00 - Server starts → First backup
+Server Start
+    ↓
+[Backup] Auto-backup started. Interval: 10 minutes
+    ↓
+10:00 - First backup
 10:10 - Auto backup
 10:20 - Auto backup
 10:30 - Auto backup
 ...
 ```
+
+**No user notifications** - Backup is completely silent. Check logs or management UI to verify.
 
 ### 2. Manual Backup
 
@@ -115,21 +121,15 @@ curl -X POST /backup/now
 
 Or click **"Backup Now"** button in the backup management UI at `/backup`.
 
-### 3. WebSocket Notification
+### 3. Silent Background Process
 
-After each backup completes, a notification is sent:
+Backup runs silently in the background. No notifications are sent to users.
 
-```typescript
-// In your component (automatic)
-// You'll receive notification via WebSocket
-{
-  event: 'notification',
-  data: {
-    type: 'success',
-    title: 'Database Backup Complete',
-    message: 'backup-2024-01-15T10-30-00-000Z.sqlite created (2.5 MB)'
-  }
-}
+Check server logs to see backup status:
+```
+[Backup] Auto-backup started. Interval: 10 minutes
+[Backup] Completed: backup-2024-01-15T10-30-00-000Z.sqlite (2.5 MB)
+[Backup] Uploaded to S3: backups/database/backup-2024-01-15T10-30-00-000Z.sqlite
 ```
 
 ## Management UI
@@ -325,5 +325,4 @@ backupService.updateConfig({
 ## See Also
 
 - [Storage](./storage.md) - S3/local storage configuration
-- [Notifications](./notifications.md) - Real-time backup notifications
 - [Database](./database.md) - SQLite & WAL mode details
