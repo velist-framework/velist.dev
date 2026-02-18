@@ -85,8 +85,7 @@ Velist uses a **multi-agent workflow** with mandatory human review points. Each 
 
 I want to build a task management app.
 Features: create tasks, set deadlines, mark complete, filter by status.
-Users: individual professionals
-Timeline: 2 weeks for MVP
+Users: individual professionals 
 ```
 
 **Output:** PRD.md, USER_STORIES.md, ROADMAP.md

@@ -60,6 +60,7 @@ export default withMermaid({
             { text: 'Authentication', link: '/guide/authentication' },
             { text: 'Google OAuth', link: '/guide/google-auth' },
             { text: 'Forms', link: '/guide/forms' },
+            { text: 'Notifications', link: '/guide/notifications' },
             { text: 'Testing', link: '/guide/testing' }
           ]
         },
