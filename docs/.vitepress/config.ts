@@ -57,6 +57,7 @@ export default withMermaid({
             { text: 'Routing', link: '/guide/routing' },
             { text: 'Database', link: '/guide/database' },
             { text: 'Storage', link: '/guide/storage' },
+            { text: 'Backup', link: '/guide/backup' },
             { text: 'Authentication', link: '/guide/authentication' },
             { text: 'Google OAuth', link: '/guide/google-auth' },
             { text: 'Forms', link: '/guide/forms' },

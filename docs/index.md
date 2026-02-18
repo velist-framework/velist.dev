@@ -63,6 +63,10 @@ features:
   - icon: 📦
     title: File Storage
     details: Upload files to local filesystem or S3-compatible storage (Wasabi, MinIO). Presigned URLs support. Unified API.
+  
+  - icon: 💾
+    title: Auto Database Backup
+    details: Automatic SQLite backups with WAL checkpoint. Creates single-file backups every 10 minutes. Optional S3 upload. Management UI included.
 ---
 
 <!-- Stats Section -->
@@ -315,6 +319,7 @@ Velist includes enterprise-grade features that usually require hours of setup:
 | **Real-time Notifications** | WebSocket-based with persistent storage |
 | **Toast Notifications** | Simple API: `toast.success('Done!')` |
 | **File Storage** | Local filesystem or S3-compatible (Wasabi, MinIO) |
+| **Database Backup** | Auto-backup with WAL, single-file, optional S3 |
 | **Shared Utilities** | CSV export, debounce, image processing, UUID v7 |
 | **Modern UI Components** | Active navigation, clean inputs, dark mode |
 
