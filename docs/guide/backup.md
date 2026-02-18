@@ -32,18 +32,25 @@ When backup runs (automatic or manual):
    ```sql
    PRAGMA wal_checkpoint(TRUNCATE)
    ```
+   ⚡ **Very fast** (milliseconds). Brief lock, business continues immediately after.
 
 2. **Copy Database** - Copy `dev.sqlite` to backup folder
+   📁 File copy operation, doesn't affect running database
 
-3. **Convert to Single-File** - Remove WAL mode from backup
+3. **Convert to Single-File** - Remove WAL mode from backup copy
    ```sql
    PRAGMA journal_mode=DELETE
-   PRAGMA VACUUM
    ```
+   ⚠️ **Note:** We skip `VACUUM` to avoid long operations. The backup is consistent without it.
 
 4. **Upload to S3** (optional) - Upload backup file to S3
+   ☁️ Background operation, doesn't affect database
 
 5. **Cleanup** - Delete old backups beyond retention limit
+
+::: tip Zero Downtime
+Backup uses **WAL checkpoint** which only briefly locks the database (milliseconds). Your app continues serving users without interruption.
+:::
 
 ### File Structure
 
@@ -241,6 +248,17 @@ BACKUP_RETENTION_COUNT=144          # Keep 12 hours locally
 BACKUP_S3_ENABLED=true              # S3 for disaster recovery
 ```
 
+::: warning Production Considerations
+**Does backup affect performance?**
+- **WAL checkpoint**: Very brief lock (milliseconds), users won't notice
+- **File copy**: Depends on DB size (100MB ~ 1 second, 1GB ~ 10 seconds)
+- **S3 upload**: Async, doesn't block
+
+**Recommendation for large databases (>1GB):**
+- Increase interval: `BACKUP_INTERVAL_MINUTES=60` (hourly)
+- Or use external backup tools for very large DBs
+:::
+
 ## Troubleshooting
 
 ### Backup not running?
@@ -285,6 +303,33 @@ Force checkpoint manually:
 ```sql
 PRAGMA wal_checkpoint(TRUNCATE);
 ```
+
+### Backup causing performance issues?
+
+**Symptoms:** App slow when backup runs
+
+**Solutions:**
+1. **Increase interval:** Don't backup too frequently
+   ```bash
+   BACKUP_INTERVAL_MINUTES=60  # Hourly instead of every 10 min
+   ```
+
+2. **Check database size:**
+   ```bash
+   ls -lh db/dev.sqlite
+   ```
+   If >1GB, consider external backup solutions
+
+3. **Monitor checkpoint duration:**
+   ```sql
+   PRAGMA wal_checkpoint(TRUNCATE);
+   -- Should complete in < 1 second
+   ```
+
+4. **Disable S3 if not needed:** S3 upload can be slow for large files
+   ```bash
+   BACKUP_S3_ENABLED=false
+   ```
 
 ## API Reference
 
