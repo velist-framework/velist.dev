@@ -115,8 +115,6 @@ export const usersApi = createProtectedApi('/users')
 
 :::
 
-:::
-
 </div>
 
 <!-- AI Workflow Section -->
