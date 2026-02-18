@@ -37,8 +37,8 @@ features:
     details: Modern stack optimized for speed. Dev server starts in <100ms. 10x faster builds. End-to-end type safety from DB to UI.
   
   - icon: 🚀
-    title: Deploy Anywhere
-    details: Built-in Docker support. One-click deploy to Cloudflare, Vercel, or your own VPS. CI/CD included.
+    title: Deploy to VPS
+    details: Native VPS deployment with PM2. SSH-based deployment included. Docker support optional. Works with any VPS provider.
   
   - icon: 🧪
     title: Testing with Bun & Playwright
@@ -209,7 +209,7 @@ Traditional fullstack development means configuring 10+ tools. With Velist, ever
 | Toast notifications | Install library | ✅ Built-in |
 | API layer | Build REST API manually | ✅ Inertia.js (backend-rendered SPA) |
 | Testing | Setup external test runner | ✅ bun:test + Playwright |
-| Deployment | Write Docker/CI files | ✅ Docker + CI/CD included |
+| Deployment | Configure Docker + CI/CD | ✅ Native VPS deployment + Docker optional |
 
 ### 🤖 Built for the AI Era
 Velist is the first framework designed specifically for AI agents:
@@ -244,24 +244,39 @@ bun run test:e2e
 
 ### 🚀 Deployment (DevOps Agent Workflow)
 
-Production-ready deployment workflow:
+Production-ready VPS deployment workflow:
 
 ```
 ✅ BUILD → ✅ DEPLOY → ✅ VERIFY → ✅ MONITOR
 ```
 
+**Native VPS deployment** (default):
+- SSH-based deployment
+- PM2 process manager
+- SQLite database (embedded, no separate DB server)
+- Nginx reverse proxy
+
 **Built-in deliverables:**
-- `Dockerfile` - Container setup
-- `DEPLOYMENT_GUIDE.md` - Step-by-step deployment
+- `DEPLOYMENT_GUIDE.md` - Step-by-step VPS deployment
+- `docker-compose.yml` - Optional Docker setup
 - `INFRASTRUCTURE.md` - Architecture documentation
 - `RELEASE_NOTES.md` - Change tracking
 
 **Deployment checklist:**
-- [ ] Build successful
-- [ ] Database migrated
+- [ ] Build successful (`bun run build`)
+- [ ] Database migrated (`bun run db:migrate`)
+- [ ] Environment variables configured
+- [ ] PM2 process started
+- [ ] Nginx configured
+- [ ] SSL certificate (Let's Encrypt)
 - [ ] Health check pass
 - [ ] Monitoring active
-- [ ] Backup configured
+
+**Docker optional** - For teams that prefer containers:
+```bash
+# Docker deployment (alternative)
+docker-compose up -d
+```
 
 ### ⚡ Developer Experience That Actually Delivers
 
