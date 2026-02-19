@@ -133,6 +133,44 @@ pm2 startup
 
 ---
 
+## Security Headers (Helmet)
+
+Velist menggunakan `elysia-helmet` untuk security headers di production. Security headers ini hanya aktif ketika `NODE_ENV=production`.
+
+### Content Security Policy (CSP)
+
+Default CSP memperbolehkan:
+- **Images**: `self`, `data:`, `blob:`, `https:` (termasuk CDN)
+- **Scripts**: `self`, `unsafe-inline`
+- **Styles**: `self`, `unsafe-inline`
+- **WebSocket**: `ws:`, `wss:` (untuk real-time features)
+
+### Custom CDN Domain
+
+Jika menggunakan CDN dengan domain spesifik (contoh: `https://driplab.b-cdn.net`), tambahkan ke konfigurasi helmet di `src/bootstrap.ts`:
+
+```typescript
+.use(env.NODE_ENV === 'production' 
+  ? helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          imgSrc: ["'self'", "data:", "blob:", "https:", "https://your-cdn.com"],
+          scriptSrc: ["'self'", "'unsafe-inline'"],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          fontSrc: ["'self'", "data:", "https:"],
+          connectSrc: ["'self'", "ws:", "wss:"],
+          mediaSrc: ["'self'", "data:", "blob:", "https:"],
+        }
+      }
+    })
+  : (a: Elysia) => a)
+```
+
+**Catatan:** Di development (`NODE_ENV=development`), helmet dan cors tidak aktif untuk memudahkan development.
+
+---
+
 ## Database in Production
 
 SQLite database location: `db/app.sqlite`
